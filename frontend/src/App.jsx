@@ -7,10 +7,10 @@ function App() {
   const [playerInfo, setPlayerInfo] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showLoggedInUI, setShowLoggedInUI] = useState<boolean>(false);
-  const [showLogin, setShowLogin] = useState<boolean>(false);
-  const [showSignUp, setShowSignUp] = useState<boolean>(false);
-  const [showLandingPage, setShowLandingPage] = useState<boolean>(true);
+  const [showLoggedInUI, setShowLoggedInUI] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true);
 
   useEffect(() => {
     fetch("http://localhost:5001/api/players")
