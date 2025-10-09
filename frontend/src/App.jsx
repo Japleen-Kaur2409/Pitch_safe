@@ -11,6 +11,7 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:5001/api/players")
