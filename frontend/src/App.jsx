@@ -21,6 +21,7 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [signupTeam, setSignupTeam] = useState("");
 
   useEffect(() => {
     fetch("http://localhost:5001/api/players")
@@ -121,13 +122,37 @@ function App() {
     }
   };
 
+  const handleLogOut = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    if (currentUser == null) {
+      setAuthError("Cannot log out; you are not signed in");
+      setAuthLoading(false);
+      return
+    }
+
+    try {
+      console.log("Attempting logout");
+      setCurrentUser(null);
+      setShowLoggedInUI(false);
+      setShowLandingPage(true);
+      setAuthLoading(false);
+    } catch (err) {
+      console.error("Logout error:", err);
+      setAuthError(`Network error: ${err.message}`);
+      setAuthLoading(false);
+    }
+  };
+
   // Handle Sign Up
   const handleSignUp = async (e) => {
     e.preventDefault();
     setAuthError("");
     setAuthLoading(true);
 
-    if (!signupEmail || !signupPassword || !signupConfirmPassword) {
+    if (!signupEmail || !signupPassword || !signupConfirmPassword || !signupTeam) {
       setAuthError("Please fill in all fields");
       setAuthLoading(false);
       return;
@@ -143,7 +168,11 @@ function App() {
       const response = await fetch("http://localhost:5001/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signupEmail, password: signupPassword }),
+        body: JSON.stringify({ 
+          email: signupEmail, 
+          password: signupPassword,
+          teamName: signupTeam 
+        }),
       });
 
       const data = await response.json();
@@ -168,6 +197,28 @@ function App() {
   if (showLoggedInUI) {
     return (
       <div className="p-8 max-w-4xl mx-auto">
+        <form>
+          <button
+            type="submit"
+            className="btn btn-login"
+            onClick={handleLogOut}
+            disabled={authLoading}
+            style={{
+              width: "50%",
+              padding: "14px",
+              border: "none",
+              borderRadius: "10px",
+              fontSize: "16px",
+              fontWeight: 500,
+              background: "white",
+              color: "#333",
+              cursor: "pointer",
+              marginBottom: "20px",
+            }}
+          >
+            Log Out
+          </button>
+        </form>
         <h1 className="text-3xl font-bold mb-6">SafePitch - Players List</h1>
         
         {loading ? (
@@ -478,8 +529,8 @@ function App() {
           }}
         >
           <div className="welcome-text" style={{ marginBottom: "30px" }}>
-            <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "5px" }}>Create Account</h1>
-            <p style={{ fontSize: "18px", fontWeight: 400 }}>to get started</p>
+            <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "5px" }}>Create Your Coach Account</h1>
+            <p style={{ fontSize: "18px", fontWeight: 400 }}>to get started!</p>
           </div>
 
           {authError && (
@@ -532,7 +583,7 @@ function App() {
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: "absolute",
-                  right: "16px",
+                  right: "7px",
                   top: "50%",
                   transform: "translateY(-50%)",
                   background: "none",
@@ -540,6 +591,7 @@ function App() {
                   cursor: "pointer",
                   fontSize: "18px",
                   color: "black",
+                  opacity:0.8,
                 }}
               >
                 👁️
@@ -569,7 +621,7 @@ function App() {
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 style={{
                   position: "absolute",
-                  right: "16px",
+                  right: "7px",
                   top: "50%",
                   transform: "translateY(-50%)",
                   background: "none",
@@ -577,10 +629,62 @@ function App() {
                   cursor: "pointer",
                   fontSize: "18px",
                   color: "white",
+                  opacity:0.8,
                 }}
               >
                 👁️
               </button>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: "15px" }}>
+              <select
+                value={signupTeam}
+                onChange={(e) => setSignupTeam(e.target.value)}
+                required
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  background: "rgba(255, 255, 255, 0.9)",
+                  color: signupTeam ? "black" : "#666",
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="">Select Your Team</option>
+                <option value="Arizona Diamondbacks">Arizona Diamondbacks</option>
+                <option value="Atlanta Braves">Atlanta Braves</option>
+                <option value="Baltimore Orioles">Baltimore Orioles</option>
+                <option value="Boston Red Sox">Boston Red Sox</option>
+                <option value="Chicago Cubs">Chicago Cubs</option>
+                <option value="Chicago White Sox">Chicago White Sox</option>
+                <option value="Cincinnati Reds">Cincinnati Reds</option>
+                <option value="Cleveland Guardians">Cleveland Guardians</option>
+                <option value="Colorado Rockies">Colorado Rockies</option>
+                <option value="Detroit Tigers">Detroit Tigers</option>
+                <option value="Houston Astros">Houston Astros</option>
+                <option value="Kansas City Royals">Kansas City Royals</option>
+                <option value="Los Angeles Angels">Los Angeles Angels</option>
+                <option value="Los Angeles Dodgers">Los Angeles Dodgers</option>
+                <option value="Miami Marlins">Miami Marlins</option>
+                <option value="Milwaukee Brewers">Milwaukee Brewers</option>
+                <option value="Minnesota Twins">Minnesota Twins</option>
+                <option value="New York Mets">New York Mets</option>
+                <option value="New York Yankees">New York Yankees</option>
+                <option value="Oakland Athletics">Oakland Athletics</option>
+                <option value="Philadelphia Phillies">Philadelphia Phillies</option>
+                <option value="Pittsburgh Pirates">Pittsburgh Pirates</option>
+                <option value="San Diego Padres">San Diego Padres</option>
+                <option value="San Francisco Giants">San Francisco Giants</option>
+                <option value="Seattle Mariners">Seattle Mariners</option>
+                <option value="St. Louis Cardinals">St. Louis Cardinals</option>
+                <option value="Tampa Bay Rays">Tampa Bay Rays</option>
+                <option value="Texas Rangers">Texas Rangers</option>
+                <option value="Toronto Blue Jays">Toronto Blue Jays</option>
+                <option value="Washington Nationals">Washington Nationals</option>
+              </select>
             </div>
 
             <button
