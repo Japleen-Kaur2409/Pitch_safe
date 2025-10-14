@@ -13,6 +13,14 @@ function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetch("http://localhost:5001/api/players")
@@ -70,6 +78,90 @@ function App() {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    if (!loginEmail || !loginPassword) {
+      setAuthError("Please enter both email and password");
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      console.log("Attempting login with:", loginEmail);
+      const response = await fetch("http://localhost:5001/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+
+      console.log("Login response status:", response.status);
+      const data = await response.json();
+      console.log("Login response data:", data);
+
+      if (!response.ok) {
+        setAuthError(data.error || "Login failed");
+        setAuthLoading(false);
+        return;
+      }
+
+      setCurrentUser(data.user);
+      setShowLoggedInUI(true);
+      setShowLogin(false);
+      setAuthLoading(false);
+    } catch (err) {
+      console.error("Login error:", err);
+      setAuthError(`Network error: ${err.message}`);
+      setAuthLoading(false);
+    }
+  };
+
+  // Handle Sign Up
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    if (!signupEmail || !signupPassword || !signupConfirmPassword) {
+      setAuthError("Please fill in all fields");
+      setAuthLoading(false);
+      return;
+    }
+
+    if (signupPassword !== signupConfirmPassword) {
+      setAuthError("Passwords do not match");
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5001/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signupEmail, password: signupPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAuthError(data.error || "Sign up failed");
+        setAuthLoading(false);
+        return;
+      }
+
+      setCurrentUser(data.user);
+      setShowLoggedInUI(true);
+      setShowSignUp(false);
+      setAuthLoading(false);
+    } catch (err) {
+      console.error("Sign up error:", err);
+      setAuthError("Network error. Please try again.");
+      setAuthLoading(false);
     }
   };
 
@@ -206,11 +298,17 @@ function App() {
             <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "5px" }}>Welcome,</h1>
             <p style={{ fontSize: "20px", fontWeight: 400 }}>Let's get batting!</p>
           </div>
-
+          {authError && (
+            <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", marginBottom: "15px", color: "white" }}>
+              {authError}
+            </div>
+          )}
           <form>
             <div className="form-group" style={{ marginBottom: "15px" }}>
               <input
                 type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
                 className="input-field"
                 placeholder="Email Address"
                 required
@@ -230,6 +328,8 @@ function App() {
             <div className="form-group password-group" style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
                 className="input-field"
                 id="password"
                 placeholder="Password"
@@ -274,11 +374,8 @@ function App() {
             <button
               type="submit"
               className="btn btn-login"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowLoggedInUI(true);
-                setShowLogin(false);
-              }}
+              onClick={handleLogin}
+              disabled={authLoading}
               style={{
                 width: "100%",
                 padding: "14px",
@@ -385,10 +482,18 @@ function App() {
             <p style={{ fontSize: "18px", fontWeight: 400 }}>to get started</p>
           </div>
 
-          <form>
+          {authError && (
+            <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", marginBottom: "15px", color: "white" }}>
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleSignUp}>
             <div className="form-group" style={{ marginBottom: "15px" }}>
               <input
                 type="email"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
                 placeholder="Email Address"
                 required
                 style={{
@@ -398,7 +503,7 @@ function App() {
                   borderRadius: "10px",
                   fontSize: "15px",
                   background: "rgba(255, 255, 255, 0.9)",
-                  color: "white",
+                  color: "black",
                   outline: "none",
                 }}
               />
@@ -407,6 +512,8 @@ function App() {
             <div className="form-group password-group" style={{ position: "relative", marginBottom: "15px" }}>
               <input
                 type={showPassword ? "text" : "password"}
+                value={signupPassword}
+                onChange={(e) => setSignupPassword(e.target.value)}
                 placeholder="Password"
                 required
                 style={{
@@ -416,7 +523,7 @@ function App() {
                   borderRadius: "10px",
                   fontSize: "15px",
                   background: "rgba(255, 255, 255, 0.9)",
-                  color: "white",
+                  color: "black",
                   outline: "none",
                 }}
               />
@@ -432,7 +539,7 @@ function App() {
                   border: "none",
                   cursor: "pointer",
                   fontSize: "18px",
-                  color: "white",
+                  color: "black",
                 }}
               >
                 👁️
@@ -442,6 +549,8 @@ function App() {
             <div className="form-group password-group" style={{ position: "relative", marginBottom: "15px" }}>
               <input
                 type={showConfirmPassword ? "text" : "password"}
+                value={signupConfirmPassword}
+                onChange={(e) => setSignupConfirmPassword(e.target.value)}
                 placeholder="Confirm Password"
                 required
                 style={{
@@ -450,8 +559,8 @@ function App() {
                   border: "none",
                   borderRadius: "10px",
                   fontSize: "15px",
-                  background: "rgba(255,255,255,0.25)",
-                  color: "white",
+                  background: "rgba(255, 255, 255, 0.9)",
+                  color: "black",
                   outline: "none",
                 }}
               />
@@ -477,11 +586,8 @@ function App() {
             <button
               type="submit"
               className="btn-signup"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowLoggedInUI(true);
-                setShowSignUp(false);
-              }}
+              onClick={handleSignUp}
+              disabled={authLoading}
               style={{
                 width: "100%",
                 padding: "14px",
