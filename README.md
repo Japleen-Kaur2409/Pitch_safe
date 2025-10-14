@@ -55,7 +55,7 @@ Copy the `.env.sample` file and rename it to `.env` in both backend folder:
 cp .env.sample .env
 ```
 
-Then fill in the values with the correct Supabase credentials (provided by the team lead or found in the Supabase Dashboard → Project Settings → API).
+Then fill in the values with the correct Supabase credentials (found in the Supabase Dashboard → Project Settings → API).
 
 ---
 
@@ -63,22 +63,22 @@ Then fill in the values with the correct Supabase credentials (provided by the t
 
 Note that you may have to run npm install bcrypt before running.
 
-#### Start the Backend Server
-```bash
-cd backend
-npm run dev
-```
-Server should start at:
-```
-http://localhost:5001
-```
-
 #### Start the Frontend
 ```bash
 cd ../frontend
 npm run dev
 ```
-Then open the URL shown in your terminal (usually `http://localhost:5173`).
+
+#### Start the Backend Server
+```bash
+cd frontend
+node server.js
+```
+Server should start at:
+```
+http://localhost:5001
+```
+Then open the URL from the frontend shown in your terminal (usually `http://localhost:5173`).
 
 ---
 
