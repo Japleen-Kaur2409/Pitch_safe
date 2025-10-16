@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
   const [players, setPlayers] = useState([]);
@@ -271,507 +272,222 @@ function App() {
     );
   } else if (showLogin) {
     return (
-      <div
-        style={{
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-          background: "linear-gradient(180deg, #a85f6f 0%, #8b6b9e 30%, #6b7cb8 50%, #7b6ca8 70%, #b8697a 100%)",
-          minHeight: "100vh",
-          width: "100%",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      >
-        <div style={{
-          textAlign: "center",
-          padding: "40px 30px",
-          maxWidth: "360px",
-          width: "100%",
-          color: "white"
-        }}>
-          <div className="welcome-text" style={{ marginBottom: "30px" }}>
-            <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "5px" }}>Welcome,</h1>
-            <p style={{ fontSize: "20px", fontWeight: 400 }}>Let's get batting!</p>
-          </div>
-          {authError && (
-            <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", marginBottom: "15px", color: "white" }}>
-              {authError}
-            </div>
-          )}
+    <div className="login-page">
+      <div className="login-card">
+        <div className="welcome-text">
+          <h1>Welcome,</h1>
+          <p>Let's get batting!</p>
+        </div>
+
+        {authError && <div className="auth-error">{authError}</div>}
           <form>
-            <div className="form-group" style={{ marginBottom: "15px" }}>
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="input-field"
-                placeholder="Email Address"
-                required
-                style={{
-                  width: "92%",
-                  padding: "14px 16px",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  color: "#333",
-                  outline: "none",
-                }}
-              />
-            </div>
+          <div className="form-group">
+            <input
+              type="email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              className="input-field"
+              placeholder="Email Address"
+              required
+            />
+          </div>
 
             <div className="form-group password-group" style={{ position: "relative" }}>
               <input
-                type={showPassword ? "text" : "password"}
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="input-field"
-                id="password"
-                placeholder="Password"
-                required
-                style={{
-                  width: "92%",
-                  padding: "14px 16px",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  color: "#333",
-                  outline: "none",
-                }}
-              />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "16px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  color: "#6b7cb8",
-                }}
-              >
-                👁️
-              </button>
-            </div>
+              type={showPassword ? "text" : "password"}
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              className="input-field"
+              placeholder="Password"
+              required
+            />
+            <button
+              type="button"
+              className="toggle-password"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              👁️
+            </button>
+          </div>
 
-            <div className="forgot-password" style={{ textAlign: "right", marginTop: "8px", marginBottom: "20px" }}>
-              <a href="#" style={{ color: "white", textDecoration: "none", fontSize: "13px" }}>
-                Forgot Password?
-              </a>
-            </div>
+            <div className="forgot-password">
+            <a href="#">Forgot Password?</a>
+          </div>
 
             <button
-              type="submit"
-              className="btn btn-login"
-              onClick={handleLogin}
-              disabled={authLoading}
-              style={{
-                width: "100%",
-                padding: "14px",
-                border: "none",
-                borderRadius: "10px",
-                fontSize: "16px",
-                fontWeight: 500,
-                background: "white",
-                color: "#333",
-                cursor: "pointer",
-                marginBottom: "20px",
-              }}
-            >
-              Log in
-            </button>
-          </form>
-
-          <div className="divider" style={{
-            display: "flex",
-            alignItems: "center",
-            color: "white",
-            margin: "25px 0",
-            fontSize: "14px",
-          }}>
-            <span style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.4)", marginRight: "15px" }}></span>
-            Or login with
-            <span style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.4)", marginLeft: "15px" }}></span>
-          </div>
-
-          <button
-            className="btn btn-google"
-            onClick={() => {
-              setShowLoggedInUI(true);
-              setShowLogin(false);
-            }}
-            style={{
-              background: "white",
-              color: "#333",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              width: "100%",
-              padding: "14px",
-              border: "none",
-              borderRadius: "10px",
-              fontSize: "16px",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
+            type="submit"
+            className="btn-login"
+            onClick={handleLogin}
+            disabled={authLoading}
           >
-            <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Continue with Google
+            Log in
           </button>
+        </form>
 
-          <div className="signup-text" style={{ color: "white", marginTop: "30px", fontSize: "14px" }}>
-            Don't have an account?{" "}
-            <a href="#" onClick={(e) => {
-              e.preventDefault();
-              setShowSignUp(true);
-              setShowLogin(false);
-            }} style={{ color: "white", textDecoration: "underline", fontWeight: 500 }}>
-              Sign up now.
-            </a>
-          </div>
+          <div className="divider">
+          <span></span>
+          Or login with
+          <span></span>
         </div>
-      </div>
-    );
-  } else if (showSignUp) {
-    return (
-      <div
-        style={{
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          width: "100%",
-          background: "linear-gradient(180deg, #a85f6f 0%, #8b6b9e 30%, #6b7cb8 50%, #7b6ca8 70%, #b8697a 100%)",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      >
-        <div
-          className="signup-container"
-          style={{
-            textAlign: "center",
-            padding: "40px 30px",
-            maxWidth: "360px",
-            width: "100%",
-            color: "white",
+
+        <button
+          className="btn-google"
+          onClick={() => {
+            setShowLoggedInUI(true);
+            setShowLogin(false);
           }}
         >
-          <div className="welcome-text" style={{ marginBottom: "30px" }}>
-            <h1 style={{ fontSize: "28px", fontWeight: 600, marginBottom: "5px" }}>Create Account</h1>
-            <p style={{ fontSize: "18px", fontWeight: 400 }}>to get started</p>
+          <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+          </svg>
+          Continue with Google
+        </button>
+
+          <div className="signup-text">
+          Don’t have an account? <a href="#">Sign up</a>
+        </div>
+      </div>
+    </div>
+  );
+
+  } else if (showSignUp) {
+  return (
+    <div className="auth-wrapper">
+      <div className="signup-container">
+        <div className="welcome-text">
+          <h1>Create Account</h1>
+          <p>to get started</p>
+        </div>
+
+        {authError && <div className="auth-error">{authError}</div>}
+
+        <form onSubmit={handleSignUp}>
+          <div className="form-group">
+            <input
+              type="email"
+              value={signupEmail}
+              onChange={(e) => setSignupEmail(e.target.value)}
+              placeholder="Email Address"
+              required
+            />
           </div>
 
-          {authError && (
-            <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", marginBottom: "15px", color: "white" }}>
-              {authError}
-            </div>
-          )}
-
-          <form onSubmit={handleSignUp}>
-            <div className="form-group" style={{ marginBottom: "15px" }}>
-              <input
-                type="email"
-                value={signupEmail}
-                onChange={(e) => setSignupEmail(e.target.value)}
-                placeholder="Email Address"
-                required
-                style={{
-                  width: "92%",
-                  padding: "14px 16px",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  color: "black",
-                  outline: "none",
-                }}
-              />
-            </div>
-
-            <div className="form-group password-group" style={{ position: "relative", marginBottom: "15px" }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={signupPassword}
-                onChange={(e) => setSignupPassword(e.target.value)}
-                placeholder="Password"
-                required
-                style={{
-                  width: "92%",
-                  padding: "14px 16px",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  color: "black",
-                  outline: "none",
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "16px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  color: "black",
-                }}
-              >
-                👁️
-              </button>
-            </div>
-
-            <div className="form-group password-group" style={{ position: "relative", marginBottom: "15px" }}>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={signupConfirmPassword}
-                onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                placeholder="Confirm Password"
-                required
-                style={{
-                  width: "92%",
-                  padding: "14px 16px",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontSize: "15px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  color: "black",
-                  outline: "none",
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: "absolute",
-                  right: "16px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  color: "white",
-                }}
-              >
-                👁️
-              </button>
-            </div>
-
+          <div className="form-group password-group">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={signupPassword}
+              onChange={(e) => setSignupPassword(e.target.value)}
+              placeholder="Password"
+              required
+            />
             <button
-              type="submit"
-              className="btn-signup"
-              onClick={handleSignUp}
-              disabled={authLoading}
-              style={{
-                width: "100%",
-                padding: "14px",
-                border: "none",
-                borderRadius: "10px",
-                fontSize: "16px",
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                marginBottom: "20px",
-                background: "white",
-                color: "#333",
-              }}
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="eye-btn"
             >
-              Sign Up
+              👁️
             </button>
-          </form>
+          </div>
 
-          <div
-            className="divider"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              color: "white",
-              margin: "25px 0",
-              fontSize: "14px",
-            }}
-          >
-            <span style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.4)", marginRight: "15px" }}></span>
-            Or sign up with
-            <span style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.4)", marginLeft: "15px" }}></span>
+          <div className="form-group password-group">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              value={signupConfirmPassword}
+              onChange={(e) => setSignupConfirmPassword(e.target.value)}
+              placeholder="Confirm Password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="eye-btn"
+            >
+              👁️
+            </button>
           </div>
 
           <button
-            className="btn-google"
-            onClick={() => {
-              setShowLoggedInUI(true);
-              setShowSignUp(false);
-            }}
-            style={{
-              width: "100%",
-              padding: "14px",
-              border: "none",
-              borderRadius: "10px",
-              fontSize: "16px",
-              fontWeight: 500,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "10px",
-              background: "white",
-              color: "#333",
-              marginBottom: "20px",
-            }}
+            type="submit"
+            className="btn-signup"
+            disabled={authLoading}
           >
-            <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Continue with Google
+            Sign Up
           </button>
+        </form>
 
-          <div className="login-text" style={{ color: "white", marginTop: "30px", fontSize: "14px" }}>
-            Already have an account?{" "}
-            <a href="#" onClick={(e) => {
+        <div className="divider">
+          <span></span> Or sign up with <span></span>
+        </div>
+
+        <button
+          className="btn-google"
+          onClick={() => {
+            setShowLoggedInUI(true);
+            setShowSignUp(false);
+          }}
+        >
+          <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92..." />
+          </svg>
+          Continue with Google
+        </button>
+
+        <div className="login-text">
+          Already have an account?{" "}
+          <a
+            href="#"
+            onClick={(e) => {
               e.preventDefault();
               setShowLogin(true);
               setShowSignUp(false);
-            }} style={{ color: "white", textDecoration: "underline", fontWeight: 500 }}>
-              Log in now.
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  } else if (showLandingPage) {
-    return (
-      <div
-        style={{
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          width: "100%",
-          background: "linear-gradient(180deg, #a85f6f 0%, #8b6b9e 30%, #6b7cb8 50%, #7b6ca8 70%, #b8697a 100%)",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      >
-        <div className="login-container" style={{ textAlign: "center", padding: "40px" }}>
-          <div className="logo-container" style={{ marginBottom: "30px" }}>
-            <div
-              className="logo"
-              style={{
-                width: "250px",
-                height: "250px",
-                marginBottom: "15px",
-                display: "inline-block",
-              }}
-            >
-              <img
-                src="src/assets/logo.png"
-                alt="PitchSafe Logo"
-                style={{ width: "100%", height: "100%", objectFit: "contain" }}
-              />
-            </div>
-            <div
-              className="app-name"
-              style={{
-                color: "white",
-                fontSize: "24px",
-                fontWeight: 600,
-                letterSpacing: "0.5px",
-              }}
-            >
-              PitchSafe
-            </div>
-          </div>
-
-          <div
-            className="button-group"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "15px",
-              width: "280px",
-              margin: "0 auto",
             }}
           >
-            <button
-              className="btn btn-login"
-              style={{
-                padding: "16px 32px",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "16px",
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                background: "white",
-                color: "#333",
-              }}
-              onClick={() => {
-                setShowLogin(true);
-                setShowLandingPage(false);
-              }}
-            >
-              Log in
-            </button>
-
-            <button
-              className="btn btn-signup"
-              style={{
-                padding: "16px 32px",
-                border: "none",
-                borderRadius: "12px",
-                fontSize: "16px",
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                background: "#7b8cdb",
-                color: "white",
-              }}
-              onClick={() => {
-                setShowSignUp(true);
-                setShowLandingPage(false);
-              }}
-            >
-              Sign Up
-            </button>
-          </div>
+            Log in now.
+          </a>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+} else if (showLandingPage) {
+  return (
+    <div className="auth-wrapper">
+      <div className="login-container">
+        <div className="logo-container">
+          <div className="logo">
+            <img src="src/assets/logo.png" alt="PitchSafe Logo" />
+          </div>
+          <div className="app-name">PitchSafe</div>
+        </div>
+
+        <div className="button-group">
+          <button
+            className="btn btn-login"
+            onClick={() => {
+              setShowLogin(true);
+              setShowLandingPage(false);
+            }}
+          >
+            Log in
+          </button>
+
+          <button
+            className="btn btn-signup"
+            onClick={() => {
+              setShowSignUp(true);
+              setShowLandingPage(false);
+            }}
+          >
+            Sign Up
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 }
 
 export default App;
