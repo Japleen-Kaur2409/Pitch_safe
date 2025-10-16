@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import GameRecordForm from './components/GameRecordForm';
 
 function App() {
   const [players, setPlayers] = useState([]);
@@ -77,6 +78,16 @@ function App() {
     return (
       <div className="p-8 max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">SafePitch - Players List</h1>
+
+        <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+          <GameRecordForm 
+          playerId={playerInfo?.player_id} 
+          onSuccess={() => {
+            // Refresh player records if needed
+            console.log('Game record added successfully');
+          }}
+        />
+        </div>
         
         {loading ? (
           <p className="text-gray-600">Loading players...</p>
