@@ -1,10 +1,10 @@
-# 🧠 SafePitch — Supabase Local Setup Guide
+# SafePitch — Supabase Local Setup Guide
 
 This guide explains how to set up and run the SafePitch project locally using **Supabase** and **Node.js**.
 
 ---
 
-## 🛠️ Prerequisites
+## Prerequisites
 
 Make sure you have these installed:
 
@@ -14,7 +14,7 @@ Make sure you have these installed:
 
 ---
 
-## 📦 Installation Steps
+## Installation Steps
 
 ### 1. Clone the Repository
 
@@ -83,7 +83,7 @@ Then open the URL shown in your terminal (usually `http://localhost:5173`).
 ---
 
 
-## 🧠 Troubleshooting
+## Troubleshooting
 
 | Issue | Possible Fix |
 |-------|---------------|
