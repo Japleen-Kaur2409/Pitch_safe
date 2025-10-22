@@ -5,7 +5,6 @@ import "./App.css";
 function App() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [showLoggedInUI, setShowLoggedInUI] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
@@ -17,6 +16,7 @@ function App() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupTeam, setSignupTeam] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -94,12 +94,36 @@ function App() {
     }
   };
 
+  const handleLogOut = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    if (currentUser == null) {
+      setAuthError("Cannot log out; you are not signed in");
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      console.log("Attempting logout");
+      setCurrentUser(null);
+      setShowLoggedInUI(false);
+      setShowLandingPage(true);
+      setAuthLoading(false);
+    } catch (err) {
+      console.error("Logout error:", err);
+      setAuthError(`Network error: ${err.message}`);
+      setAuthLoading(false);
+    }
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
     setAuthError("");
     setAuthLoading(true);
 
-    if (!signupEmail || !signupPassword || !signupConfirmPassword) {
+    if (!signupEmail || !signupPassword || !signupConfirmPassword || !signupTeam) {
       setAuthError("Please fill in all fields");
       setAuthLoading(false);
       return;
@@ -115,7 +139,11 @@ function App() {
       const response = await fetch("http://localhost:5001/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signupEmail, password: signupPassword }),
+        body: JSON.stringify({ 
+          email: signupEmail, 
+          password: signupPassword,
+          teamName: signupTeam 
+        }),
       });
 
       const data = await response.json();
@@ -176,6 +204,27 @@ function App() {
         overflowY: "auto",
       }}>
         <div style={{
+          position: 'absolute',
+          top: '3vh',
+          left: '80%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5vw',
+          padding: '1vh 1.5vw',
+          borderRadius: '1vw',
+          maxWidth: '90%',
+        }}>
+          <span style={{ color: 'white', fontWeight: 600, fontSize: 'clamp(14px, 1.5vw, 18px)', whiteSpace: 'nowrap', }}>{currentUser?.email}</span>
+          <button
+            onClick={handleLogOut}
+            disabled={authLoading}
+            className="logged-in-btn"
+          >
+            Log Out
+          </button>
+        </div>
+        <div style={{
           width: "100%",
           maxWidth: "420px",
           paddingBottom: "100px",
@@ -216,20 +265,7 @@ function App() {
                   setCurrentView('roster');
                   setSelectedPlayer(null);
                 }}
-                style={{
-                  background: "rgba(255, 255, 255, 0.2)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "10px 20px",
-                  marginBottom: "20px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
+                className="logged-in-btn"
               >
                 ← Back to Roster
               </button>
@@ -717,8 +753,18 @@ function App() {
           Continue with Google
         </button>
 
-          <div className="signup-text">
-          Don’t have an account? <a href="#">Sign up</a>
+        <div className="login-text">
+          Don't have an account?{" "}
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowLogin(false);
+              setShowSignUp(true);
+            }}
+          >
+            Sign up now!
+          </a>
         </div>
       </div>
     </div>
@@ -778,6 +824,57 @@ function App() {
             >
               👁️
             </button>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: "15px" }}>
+            <select
+              value={signupTeam}
+              onChange={(e) => setSignupTeam(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                border: "none",
+                borderRadius: "10px",
+                fontSize: "15px",
+                background: "rgba(255, 255, 255, 0.9)",
+                color: signupTeam ? "black" : "#666",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">Select Your Team</option>
+              <option value="Arizona Diamondbacks">Arizona Diamondbacks</option>
+              <option value="Atlanta Braves">Atlanta Braves</option>
+              <option value="Baltimore Orioles">Baltimore Orioles</option>
+              <option value="Boston Red Sox">Boston Red Sox</option>
+              <option value="Chicago Cubs">Chicago Cubs</option>
+              <option value="Chicago White Sox">Chicago White Sox</option>
+              <option value="Cincinnati Reds">Cincinnati Reds</option>
+              <option value="Cleveland Guardians">Cleveland Guardians</option>
+              <option value="Colorado Rockies">Colorado Rockies</option>
+              <option value="Detroit Tigers">Detroit Tigers</option>
+              <option value="Houston Astros">Houston Astros</option>
+              <option value="Kansas City Royals">Kansas City Royals</option>
+              <option value="Los Angeles Angels">Los Angeles Angels</option>
+              <option value="Los Angeles Dodgers">Los Angeles Dodgers</option>
+              <option value="Miami Marlins">Miami Marlins</option>
+              <option value="Milwaukee Brewers">Milwaukee Brewers</option>
+              <option value="Minnesota Twins">Minnesota Twins</option>
+              <option value="New York Mets">New York Mets</option>
+              <option value="New York Yankees">New York Yankees</option>
+              <option value="Oakland Athletics">Oakland Athletics</option>
+              <option value="Philadelphia Phillies">Philadelphia Phillies</option>
+              <option value="Pittsburgh Pirates">Pittsburgh Pirates</option>
+              <option value="San Diego Padres">San Diego Padres</option>
+              <option value="San Francisco Giants">San Francisco Giants</option>
+              <option value="Seattle Mariners">Seattle Mariners</option>
+              <option value="St. Louis Cardinals">St. Louis Cardinals</option>
+              <option value="Tampa Bay Rays">Tampa Bay Rays</option>
+              <option value="Texas Rangers">Texas Rangers</option>
+              <option value="Toronto Blue Jays">Toronto Blue Jays</option>
+              <option value="Washington Nationals">Washington Nationals</option>
+            </select>
           </div>
 
           <button
