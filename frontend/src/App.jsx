@@ -5,9 +5,6 @@ import "./App.css";
 function App() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [playerId, setPlayerId] = useState("");
-  const [playerInfo, setPlayerInfo] = useState(null);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState("");
   const [showLoggedInUI, setShowLoggedInUI] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -23,8 +20,12 @@ function App() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentView, setCurrentView] = useState('roster');
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [showAddPlayerForm, setShowAddPlayerForm] = useState(false);
 
-  useEffect(() => {
+  // Fetch players
+  const fetchPlayers = () => {
     fetch("http://localhost:5001/api/players")
       .then((res) => res.json())
       .then((data) => {
@@ -35,52 +36,25 @@ function App() {
         console.error("Error fetching data:", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchPlayers();
   }, []);
 
-  const handleSearch = () => {
-    setError("");
-    
-    if (!playerId.trim()) {
-      setError("Please enter a player ID");
-      setPlayerInfo(null);
-      return;
-    }
-
-    setSearchLoading(true);
-    setPlayerInfo(null);
-
-    console.log(`Fetching: http://localhost:5001/api/players/${playerId}/info`);
-
-    fetch(`http://localhost:5001/api/players/${playerId}/info`)
+  // Fetch individual player info
+  const fetchPlayerInfo = (playerId) => {
+    return fetch(`http://localhost:5001/api/players/${playerId}/info`)
       .then((res) => {
-        console.log("Response status:", res.status);
         if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error(`Player with ID ${playerId} not found`);
-          } else {
-            throw new Error(`Server error (Status: ${res.status})`);
-          }
+          throw new Error(`Player info not found`);
         }
         return res.json();
       })
-      .then((data) => {
-        console.log("Player data received:", data);
-        setPlayerInfo(data);
-        setSearchLoading(false);
-        setError("");
-      })
       .catch((err) => {
         console.error("Error fetching player info:", err);
-        setError(err.message);
-        setSearchLoading(false);
-        setPlayerInfo(null);
+        return null;
       });
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
   };
 
   const handleLogin = async (e) => {
@@ -95,16 +69,13 @@ function App() {
     }
 
     try {
-      console.log("Attempting login with:", loginEmail);
       const response = await fetch("http://localhost:5001/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
 
-      console.log("Login response status:", response.status);
       const data = await response.json();
-      console.log("Login response data:", data);
 
       if (!response.ok) {
         setAuthError(data.error || "Login failed");
@@ -123,7 +94,6 @@ function App() {
     }
   };
 
-  // Handle Sign Up
   const handleSignUp = async (e) => {
     e.preventDefault();
     setAuthError("");
@@ -167,117 +137,507 @@ function App() {
     }
   };
 
+  const handlePlayerClick = async (player) => {
+    setSelectedPlayer(player);
+    
+    // Fetch detailed player info
+    const playerInfo = await fetchPlayerInfo(player.player_id);
+    if (playerInfo) {
+      setSelectedPlayer({ ...player, ...playerInfo });
+    }
+    
+    setCurrentView('playerDetail');
+  };
+
+  const handleAddPlayerSuccess = () => {
+    // Refresh the players list
+    fetchPlayers();
+    setShowAddPlayerForm(false);
+    setCurrentView('roster');
+  };
+
   if (showLoggedInUI) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">SafePitch - Players List</h1>
-
-        <div className="bg-white rounded-lg shadow-md p-6 mt-8">
-          <GameRecordForm 
-          playerId={playerInfo?.player_id} 
-          onSuccess={() => {
-            // Refresh player records if needed
-            console.log('Game record added successfully');
-          }}
-        />
-        </div>
-        
-        {loading ? (
-          <p className="text-gray-600">Loading players...</p>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">Current Players</h2>
-            <ul className="space-y-2">
-              {players.map((player) => (
-                <li key={player.player_id} className="flex items-center p-3 hover:bg-gray-50 rounded">
-                  <span className="text-gray-500 mr-3">ID: {player.player_id}</span>
-                  <span className="font-medium">{player.first_name} {player.last_name}</span>
-                  <span className="ml-auto text-blue-600">{player.team_name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Search Player Personal Info</h2>
-          <div className="flex gap-3 mb-4">
-            <input
-              type="text"
-              placeholder="Enter Player ID (e.g., 1, 2, 3)"
-              value={playerId}
-              onChange={(e) => setPlayerId(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button 
-              onClick={handleSearch}
-              disabled={searchLoading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {searchLoading ? 'Searching...' : 'Search'}
-            </button>
-          </div>
-
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md mb-4">
-              <p className="text-red-600">{error}</p>
+      <div style={{
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+        background: "linear-gradient(180deg, #a85f6f 0%, #8b6b9e 30%, #6b7cb8 50%, #7b6ca8 70%, #b8697a 100%)",
+        minHeight: "100vh",
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        padding: "20px",
+        paddingTop: "40px",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflowY: "auto",
+      }}>
+        <div style={{
+          width: "100%",
+          maxWidth: "420px",
+          paddingBottom: "100px",
+        }}>
+          {/* Header */}
+          <div style={{
+            textAlign: "center",
+            marginBottom: "30px",
+          }}>
+            <div style={{
+              width: "100px",
+              height: "100px",
+              margin: "0 auto 15px",
+              background: "rgba(255, 255, 255, 0.15)",
+              borderRadius: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "48px",
+            }}>
+              🔵
             </div>
-          )}
-
-          {searchLoading && (
-            <div className="text-center py-4">
-              <p className="text-gray-600">Loading player info...</p>
+            <div style={{
+              color: "white",
+              fontSize: "28px",
+              fontWeight: 700,
+              letterSpacing: "0.5px",
+            }}>
+              Toronto Blue Jays
             </div>
-          )}
+          </div>
 
-          {playerInfo && !searchLoading && (
-            <div className="bg-gray-50 rounded-md p-4">
-              <h3 className="text-lg font-semibold mb-3 text-green-700">Player Information Found</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <span className="font-medium text-gray-600">Player ID:</span>
-                  <span className="ml-2">{playerInfo.player_id}</span>
+          {/* Player Detail View */}
+          {currentView === 'playerDetail' && selectedPlayer && (
+            <>
+              <button
+                onClick={() => {
+                  setCurrentView('roster');
+                  setSelectedPlayer(null);
+                }}
+                style={{
+                  background: "rgba(255, 255, 255, 0.2)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 20px",
+                  marginBottom: "20px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                ← Back to Roster
+              </button>
+
+              {/* Player Info Card */}
+              <div style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "20px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+              }}>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  marginBottom: "20px",
+                }}>
+                  <div style={{
+                    width: "80px",
+                    height: "80px",
+                    borderRadius: "12px",
+                    background: "linear-gradient(135deg, #8b6b9e 0%, #7b6ca8 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "40px",
+                  }}>
+                    👤
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#333", marginBottom: "5px" }}>
+                      {selectedPlayer.first_name} {selectedPlayer.last_name}
+                    </h2>
+                    <p style={{ fontSize: "16px", color: "#666", margin: 0 }}>
+                      #{selectedPlayer.player_id} • {selectedPlayer.team_name || "TOR"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium text-gray-600">Date of Birth:</span>
-                  <span className="ml-2">{new Date(playerInfo.date_of_birth).toLocaleDateString()}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Bats:</span>
-                  <span className="ml-2">{playerInfo.bats === 'R' ? 'Right' : 'Left'}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Throws:</span>
-                  <span className="ml-2">{playerInfo.throws === 'R' ? 'Right' : 'Left'}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Height:</span>
-                  <span className="ml-2">{playerInfo.height}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Weight:</span>
-                  <span className="ml-2">{playerInfo.weight} lbs</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Level:</span>
-                  <span className="ml-2">{playerInfo.level}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">How Acquired:</span>
-                  <span className="ml-2">{playerInfo.how_acquired}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Signing Bonus:</span>
-                  <span className="ml-2">{playerInfo.signing_bonus ? `$${playerInfo.signing_bonus.toLocaleString()}` : "N/A"}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">School:</span>
-                  <span className="ml-2">{playerInfo.school || "N/A"}</span>
-                </div>
+
+                {selectedPlayer.date_of_birth && (
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "15px",
+                    padding: "20px",
+                    background: "#f8f9fa",
+                    borderRadius: "8px",
+                  }}>
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                        Date of Birth
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                        {new Date(selectedPlayer.date_of_birth).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                        Bats
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                        {selectedPlayer.bats === 'R' ? 'Right' : 'Left'}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                        Throws
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                        {selectedPlayer.throws === 'R' ? 'Right' : 'Left'}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                        Height
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                        {selectedPlayer.height}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                        Weight
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                        {selectedPlayer.weight} lbs
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                        Level
+                      </span>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                        {selectedPlayer.level}
+                      </span>
+                    </div>
+                    {selectedPlayer.school && (
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
+                          School
+                        </span>
+                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
+                          {selectedPlayer.school}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Game Record Form */}
+              <div style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "20px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+              }}>
+                <GameRecordForm 
+                  playerId={selectedPlayer.player_id} 
+                  onSuccess={() => {
+                    console.log('Game record added successfully');
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Roster View with Add Player Button */}
+          {currentView === 'roster' && (
+            <>
+              {/* Add Player Button */}
+              <button
+                onClick={() => setShowAddPlayerForm(!showAddPlayerForm)}
+                style={{
+                  width: "100%",
+                  background: "rgba(255, 255, 255, 0.95)",
+                  color: "#7b6ca8",
+                  border: "none",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "20px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
+                }}
+              >
+                <span style={{ fontSize: "20px" }}>➕</span>
+                {showAddPlayerForm ? 'Hide Add Player Form' : 'Add New Player'}
+              </button>
+
+              {/* Add Player Form */}
+              {showAddPlayerForm && (
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.95)",
+                  borderRadius: "12px",
+                  padding: "20px",
+                  marginBottom: "20px",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                }}>
+                  <h3 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "15px", color: "#333" }}>
+                    Add New Player
+                  </h3>
+                  <GameRecordForm 
+                    playerId={null}
+                    onSuccess={handleAddPlayerSuccess}
+                  />
+                </div>
+              )}
+
+              {/* Players List */}
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                marginBottom: "20px",
+              }}>
+                {loading ? (
+                  <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
+                    Loading players...
+                  </div>
+                ) : (
+                  players.map((player) => (
+                    <div 
+                      key={player.player_id} 
+                      onClick={() => handlePlayerClick(player)}
+                      style={{
+                        background: "linear-gradient(135deg, #8b6b9e 0%, #7b6ca8 100%)",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "15px",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.25)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
+                      }}
+                    >
+                      <div style={{
+                        color: "white",
+                        fontSize: "24px",
+                        fontWeight: 700,
+                        minWidth: "40px",
+                        textAlign: "center",
+                      }}>
+                        #{player.player_id}
+                      </div>
+
+                      <div style={{
+                        width: "70px",
+                        height: "70px",
+                        borderRadius: "10px",
+                        background: "rgba(255, 255, 255, 0.2)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "32px",
+                        flexShrink: 0,
+                      }}>
+                        👤
+                      </div>
+
+                      <div style={{ flex: 1, textAlign: "left" }}>
+                        <div style={{
+                          color: "white",
+                          fontSize: "16px",
+                          fontWeight: 600,
+                          marginBottom: "6px",
+                        }}>
+                          {player.first_name} {player.last_name}
+                        </div>
+                        <div style={{
+                          display: "flex",
+                          gap: "12px",
+                          fontSize: "13px",
+                          color: "rgba(255, 255, 255, 0.85)",
+                        }}>
+                          <div style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                          }}>
+                            <span style={{ fontSize: "11px", opacity: 0.8 }}>Team</span>
+                            <span style={{ fontWeight: 600, fontSize: "14px" }}>
+                              {player.team_name || "TOR"}
+                            </span>
+                          </div>
+                          <div style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                          }}>
+                            <span style={{ fontSize: "11px", opacity: 0.8 }}>ID</span>
+                            <span style={{ fontWeight: 600, fontSize: "14px" }}>
+                              {player.player_id}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Stats View */}
+          {currentView === 'stats' && (
+            <div style={{
+              background: "rgba(255, 255, 255, 0.95)",
+              borderRadius: "12px",
+              padding: "20px",
+              marginBottom: "20px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+              textAlign: "center",
+            }}>
+              <h3 style={{ color: "#333", fontSize: "20px" }}>Team Statistics</h3>
+              <p style={{ color: "#666", marginTop: "10px" }}>Coming soon...</p>
             </div>
           )}
+
+          {/* Download View */}
+          {currentView === 'download' && (
+            <div style={{
+              background: "rgba(255, 255, 255, 0.95)",
+              borderRadius: "12px",
+              padding: "20px",
+              marginBottom: "20px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+              textAlign: "center",
+            }}>
+              <h3 style={{ color: "#333", fontSize: "20px" }}>Download Reports</h3>
+              <p style={{ color: "#666", marginTop: "10px" }}>Coming soon...</p>
+            </div>
+          )}
+
+          {/* Bottom Navigation */}
+          <div style={{
+            position: "fixed",
+            bottom: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "calc(100% - 40px)",
+            maxWidth: "420px",
+            background: "rgba(139, 69, 69, 0.8)",
+            borderRadius: "12px",
+            padding: "16px",
+            display: "flex",
+            justifyContent: "space-around",
+            alignItems: "center",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+            backdropFilter: "blur(10px)",
+          }}>
+            <div
+              onClick={() => setCurrentView('stats')}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                color: "white",
+                fontSize: "24px",
+                opacity: currentView === 'stats' ? 1 : 0.6,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <span>📊</span>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.9)" }}>Stats</span>
+            </div>
+
+            <div
+              onClick={() => setCurrentView('roster')}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                color: "white",
+                fontSize: "24px",
+                opacity: currentView === 'roster' || currentView === 'playerDetail' ? 1 : 0.6,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <span>🏠</span>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.9)" }}>Home</span>
+            </div>
+
+            <div
+              onClick={() => setCurrentView('download')}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                color: "white",
+                fontSize: "24px",
+                opacity: currentView === 'download' ? 1 : 0.6,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <span>⬇️</span>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.9)" }}>Download</span>
+            </div>
+          </div>
         </div>
       </div>
     );
