@@ -860,7 +860,7 @@ function App() {
       textAlign: "center",
       textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
     }}>
-      Download Reports
+      Download Report
     </h3>
 
     {/* Team Summary Section */}
