@@ -23,6 +23,7 @@ function App() {
   const [currentView, setCurrentView] = useState('roster');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showAddPlayerForm, setShowAddPlayerForm] = useState(false);
+  const [playerMLBIds, setPlayerMLBIds] = useState({});
 
   // Fetch players
   const fetchPlayers = () => {
@@ -56,6 +57,88 @@ function App() {
         return null;
       });
   };
+
+  // Team abbreviation mapping for logos
+  const getTeamAbbreviation = (teamName) => {
+    const teamMap = {
+      'Arizona Diamondbacks': 'ari',
+      'Atlanta Braves': 'atl',
+      'Baltimore Orioles': 'bal',
+      'Boston Red Sox': 'bos',
+      'Chicago Cubs': 'chc',
+      'Chicago White Sox': 'chw',
+      'Cincinnati Reds': 'cin',
+      'Cleveland Guardians': 'cle',
+      'Colorado Rockies': 'col',
+      'Detroit Tigers': 'det',
+      'Houston Astros': 'hou',
+      'Kansas City Royals': 'kc',
+      'Los Angeles Angels': 'laa',
+      'Los Angeles Dodgers': 'lad',
+      'Miami Marlins': 'mia',
+      'Milwaukee Brewers': 'mil',
+      'Minnesota Twins': 'min',
+      'New York Mets': 'nym',
+      'New York Yankees': 'nyy',
+      'Oakland Athletics': 'oak',
+      'Philadelphia Phillies': 'phi',
+      'Pittsburgh Pirates': 'pit',
+      'San Diego Padres': 'sd',
+      'San Francisco Giants': 'sf',
+      'Seattle Mariners': 'sea',
+      'St. Louis Cardinals': 'stl',
+      'Tampa Bay Rays': 'tb',
+      'Texas Rangers': 'tex',
+      'Toronto Blue Jays': 'tor',
+      'Washington Nationals': 'wsh'
+    };
+    return teamMap[teamName] || 'mlb';
+  };
+
+  const getTeamLogo = (teamName) => {
+    const abbrev = getTeamAbbreviation(teamName);
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev}.png`;
+  };
+
+  // Fetch MLB Stats API player ID for plyer images
+  const fetchMLBPlayerId = async (firstName, lastName) => {
+    try {
+      const searchQuery = `${firstName} ${lastName}`;
+      console.log('Searching for player:', searchQuery);
+      
+      // Using MLB Stats API search endpoint
+      const response = await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(searchQuery)}`);
+      const data = await response.json();
+      
+      console.log('Search results:', data);
+      
+      // Look for exact match
+      if (data.people && data.people.length > 0) {
+        const exactMatch = data.people.find(p => 
+          p.fullName.toLowerCase() === searchQuery.toLowerCase() ||
+          `${p.firstName} ${p.lastName}`.toLowerCase() === searchQuery.toLowerCase()
+        );
+        
+        const playerId = exactMatch ? exactMatch.id : data.people[0].id;
+        console.log('Found player ID:', playerId);
+        return playerId;
+      }
+      
+      console.log('No player found');
+      return null;
+    } catch (error) {
+      console.error('Error fetching MLB player ID:', error);
+      return null;
+    }
+  };
+
+const getPlayerImage = (mlbPlayerId) => {
+  if (mlbPlayerId) {
+    // MLB official headshot URL - simplified version
+    return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${mlbPlayerId}/headshot/67/current`;
+  }
+  return null;
+};
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -168,6 +251,14 @@ function App() {
   const handlePlayerClick = async (player) => {
     setSelectedPlayer(player);
     
+    // Fetch MLB Stats API ID if we don't have it yet
+    if (!playerMLBIds[player.player_id]) {
+      const mlbId = await fetchMLBPlayerId(player.first_name, player.last_name);
+      if (mlbId) {
+        setPlayerMLBIds(prev => ({...prev, [player.player_id]: mlbId}));
+      }
+    }
+    
     // Fetch detailed player info
     const playerInfo = await fetchPlayerInfo(player.player_id);
     if (playerInfo) {
@@ -234,19 +325,19 @@ function App() {
             textAlign: "center",
             marginBottom: "30px",
           }}>
-            <div style={{
-              width: "100px",
-              height: "100px",
-              margin: "0 auto 15px",
-              background: "rgba(255, 255, 255, 0.15)",
-              borderRadius: "12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "48px",
-            }}>
-              🔵
-            </div>
+            <img
+              src={getTeamLogo(currentUser?.teamName || "Toronto Blue Jays")}
+              alt="Team Logo"
+              style={{
+                width: "100px",
+                height: "100px",
+                margin: "0 auto 15px",
+                borderRadius: "12px",
+                objectFit: "contain",
+                backgroundColor: "rgba(255, 255, 255, 0.15)",
+              }}
+              onError={(e) => (e.currentTarget.src = "/default-team.png")}
+            />
             <div style={{
               color: "white",
               fontSize: "28px",
@@ -284,17 +375,49 @@ function App() {
                   gap: "15px",
                   marginBottom: "20px",
                 }}>
-                  <div style={{
-                    width: "80px",
-                    height: "80px",
-                    borderRadius: "12px",
-                    background: "linear-gradient(135deg, #8b6b9e 0%, #7b6ca8 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "40px",
-                  }}>
-                    👤
+                  {/* Player Image Container */}
+                  <div style={{ position: "relative" }}>
+                    {playerMLBIds[selectedPlayer.player_id] && (
+                      <img
+                        src={getPlayerImage(playerMLBIds[selectedPlayer.player_id])}
+                        alt={`${selectedPlayer.first_name} ${selectedPlayer.last_name}`}
+                        style={{
+                          width: "70px",
+                          height: "70px",
+                          borderRadius: "10px",
+                          objectFit: "cover",
+                          backgroundColor: "#e9ecef",
+                          display: "block",
+                        }}
+                        onError={(e) => {
+                          console.log('Image failed to load for player:', selectedPlayer.first_name, selectedPlayer.last_name);
+                          e.currentTarget.style.display = 'none';
+                          if (e.currentTarget.nextElementSibling) {
+                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                          }
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully for:', selectedPlayer.first_name, selectedPlayer.last_name);
+                        }}
+                      />
+                    )}
+                    {/* Player avatar placeholder */}
+                    <div style={{
+                      width: "70px",
+                      height: "70px",
+                      borderRadius: "10px",
+                      backgroundColor: "#7b6ca8",
+                      display: playerMLBIds[selectedPlayer.player_id] ? "none" : "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "32px",
+                      color: "white",
+                      position: playerMLBIds[selectedPlayer.player_id] ? "absolute" : "relative",
+                      top: 0,
+                      left: 0,
+                    }}>
+                      👤
+                    </div>
                   </div>
                   <div>
                     <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#333", marginBottom: "5px" }}>
@@ -497,18 +620,46 @@ function App() {
                         #{player.player_id}
                       </div>
 
-                      <div style={{
-                        width: "70px",
-                        height: "70px",
-                        borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.2)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "32px",
-                        flexShrink: 0,
-                      }}>
-                        👤
+                      {/* Player Image Container */}
+                      <div style={{ position: "relative" }}>
+                        {playerMLBIds[player.player_id] && (
+                          <img
+                            src={getPlayerImage(playerMLBIds[player.player_id])}
+                            alt={`${player.first_name} ${player.last_name}`}
+                            style={{
+                              width: "70px",
+                              height: "70px",
+                              borderRadius: "10px",
+                              objectFit: "cover",
+                              backgroundColor: "rgba(255, 255, 255, 0.2)",
+                              display: "block",
+                            }}
+                            onError={(e) => {
+                              console.log('Image failed to load for:', player.first_name, player.last_name);
+                              e.currentTarget.style.display = 'none';
+                              if (e.currentTarget.nextElementSibling) {
+                                e.currentTarget.nextElementSibling.style.display = 'flex';
+                              }
+                            }}
+                          />
+                        )}
+                        {/* Player avatar placeholder */}
+                        <div style={{
+                          width: "70px",
+                          height: "70px",
+                          borderRadius: "10px",
+                          background: "rgba(255, 255, 255, 0.2)",
+                          display: playerMLBIds[player.player_id] ? "none" : "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "32px",
+                          flexShrink: 0,
+                          position: playerMLBIds[player.player_id] ? "absolute" : "relative",
+                          top: 0,
+                          left: 0,
+                        }}>
+                          👤
+                        </div>
                       </div>
 
                       <div style={{ flex: 1, textAlign: "left" }}>
