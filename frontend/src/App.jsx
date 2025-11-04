@@ -248,9 +248,20 @@ const getPlayerImage = (mlbPlayerId) => {
     }
   };
 
-  const handlePlayerClick = async (player) => {
-    setSelectedPlayer(player);
+  const handlePlayerClick = async (player, index) => {
+    // Temporary placeholder stats - these should ideally come from your API
+    const fatigueScores = [33, 28, 19, 14, 8];
+    const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
+    const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
+ 
+    const playerWithStats = {
+      ...player,
+      fatigueScore: fatigueScores[index % fatigueScores.length],
+      velocity: velocities[index % velocities.length],
+      spinRate: spinRates[index % spinRates.length],
+    };
     
+    setSelectedPlayer(playerWithStats);
     // Fetch MLB Stats API ID if we don't have it yet
     if (!playerMLBIds[player.player_id]) {
       const mlbId = await fetchMLBPlayerId(player.first_name, player.last_name);
@@ -262,7 +273,7 @@ const getPlayerImage = (mlbPlayerId) => {
     // Fetch detailed player info
     const playerInfo = await fetchPlayerInfo(player.player_id);
     if (playerInfo) {
-      setSelectedPlayer({ ...player, ...playerInfo });
+      setSelectedPlayer(prev => ({ ...prev, ...playerInfo }));
     }
     
     setCurrentView('playerDetail');
@@ -351,153 +362,267 @@ const getPlayerImage = (mlbPlayerId) => {
           {/* Player Detail View */}
           {currentView === 'playerDetail' && selectedPlayer && (
             <>
+              {/* Back Button */}
               <button
                 onClick={() => {
                   setCurrentView('roster');
                   setSelectedPlayer(null);
                 }}
-                className="logged-in-btn"
+                style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  color: "#7b6ca8",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "12px 20px",
+                  marginBottom: "20px",
+                  cursor: "pointer",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
               >
                 ← Back to Roster
               </button>
 
-              {/* Player Info Card */}
+              {/* Team Name Header */}
               <div style={{
-                background: "rgba(255, 255, 255, 0.95)",
-                borderRadius: "12px",
-                padding: "20px",
+                color: "white",
+                fontSize: "18px",
+                fontWeight: 600,
+                marginBottom: "10px",
+                textAlign: "center",
+              }}>
+                
+              </div>
+
+              {/* Player Card with Photo and Name */}
+              <div style={{
+                background: (() => {
+                  const score = selectedPlayer.fatigueScore;
+                  if (score > 20) return "linear-gradient(180deg, rgba(231, 76, 60, 0.85) 0%, rgba(192, 57, 43, 0.85) 100%)";
+                  if (score > 10) return "linear-gradient(180deg, rgba(155, 89, 182, 0.85) 0%, rgba(142, 68, 173, 0.85) 100%)";
+                  return "linear-gradient(180deg, rgba(52, 152, 219, 0.85) 0%, rgba(41, 128, 185, 0.85) 100%)";
+                })(),
+                borderRadius: "16px",
+                padding: "24px",
                 marginBottom: "20px",
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                textAlign: "center",
+                color: "white",
               }}>
                 <div style={{
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  marginBottom: "16px",
+                }}>
+                  #{selectedPlayer.player_id} {selectedPlayer.first_name} {selectedPlayer.last_name}
+                </div>
+
+                {/* Player Photo */}
+                <div style={{
+                  width: "140px",
+                  height: "140px",
+                  margin: "0 auto 16px",
+                  borderRadius: "50%",
+                  background: "rgba(255, 255, 255, 0.3)",
+                  border: "4px solid rgba(255, 255, 255, 0.5)",
                   display: "flex",
                   alignItems: "center",
-                  gap: "15px",
-                  marginBottom: "20px",
+                  justifyContent: "center",
+                  fontSize: "64px",
+                  overflow: "hidden",
                 }}>
                   {/* Player Image Container */}
-                  <div style={{ position: "relative" }}>
-                    {playerMLBIds[selectedPlayer.player_id] && (
-                      <img
-                        src={getPlayerImage(playerMLBIds[selectedPlayer.player_id])}
-                        alt={`${selectedPlayer.first_name} ${selectedPlayer.last_name}`}
-                        style={{
-                          width: "70px",
-                          height: "70px",
-                          borderRadius: "10px",
-                          objectFit: "cover",
-                          backgroundColor: "#e9ecef",
-                          display: "block",
-                        }}
-                        onError={(e) => {
-                          console.log('Image failed to load for player:', selectedPlayer.first_name, selectedPlayer.last_name);
-                          e.currentTarget.style.display = 'none';
-                          if (e.currentTarget.nextElementSibling) {
-                            e.currentTarget.nextElementSibling.style.display = 'flex';
-                          }
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully for:', selectedPlayer.first_name, selectedPlayer.last_name);
-                        }}
-                      />
-                    )}
-                    {/* Player avatar placeholder */}
-                    <div style={{
-                      width: "70px",
-                      height: "70px",
-                      borderRadius: "10px",
-                      backgroundColor: "#7b6ca8",
-                      display: playerMLBIds[selectedPlayer.player_id] ? "none" : "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "32px",
-                      color: "white",
-                      position: playerMLBIds[selectedPlayer.player_id] ? "absolute" : "relative",
-                      top: 0,
-                      left: 0,
-                    }}>
-                      👤
-                    </div>
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#333", marginBottom: "5px" }}>
-                      {selectedPlayer.first_name} {selectedPlayer.last_name}
-                    </h2>
-                    <p style={{ fontSize: "16px", color: "#666", margin: 0 }}>
-                      #{selectedPlayer.player_id} • {selectedPlayer.team_name || "TOR"}
-                    </p>
+                  {playerMLBIds[selectedPlayer.player_id] && (
+                    <img
+                      src={getPlayerImage(playerMLBIds[selectedPlayer.player_id])}
+                      alt={`${selectedPlayer.first_name} ${selectedPlayer.last_name}`}
+                      style={{
+                        width: "140px",
+                        height: "140px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                      onError={(e) => {
+                        console.log('Image failed to load for player:', selectedPlayer.first_name, selectedPlayer.last_name);
+                        e.currentTarget.style.display = 'none';
+                        if (e.currentTarget.nextElementSibling) {
+                          e.currentTarget.nextElementSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  )}
+                  {/* Player avatar placeholder */}
+                  <div style={{
+                    width: "140px",
+                    height: "140px",
+                    borderRadius: "50%",
+                    display: playerMLBIds[selectedPlayer.player_id] ? "none" : "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "64px",
+                    position: playerMLBIds[selectedPlayer.player_id] ? "absolute" : "relative",
+                    top: 0,
+                    left: 0,
+                  }}>
+                    👤
                   </div>
                 </div>
 
-                {selectedPlayer.date_of_birth && (
-                  <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "15px",
-                    padding: "20px",
-                    background: "#f8f9fa",
-                    borderRadius: "8px",
-                  }}>
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                        Date of Birth
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                        {new Date(selectedPlayer.date_of_birth).toLocaleDateString()}
-                      </span>
+                {/* Fatigue Score */}
+                <div style={{
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  marginBottom: "24px",
+                }}>
+                  Fatigue Score: {selectedPlayer.fatigueScore}%
+                </div>
+
+                {/* Stats Row */}
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                  paddingTop: "16px",
+                  borderTop: "2px solid rgba(255, 255, 255, 0.3)",
+                }}>
+                  <div>
+                    <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>B/T</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>
+                      {selectedPlayer.bats || 'R'}/{selectedPlayer.throws || 'R'}
                     </div>
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                        Bats
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                        {selectedPlayer.bats === 'R' ? 'Right' : 'Left'}
-                      </span>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                        Throws
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                        {selectedPlayer.throws === 'R' ? 'Right' : 'Left'}
-                      </span>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                        Height
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                        {selectedPlayer.height}
-                      </span>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                        Weight
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                        {selectedPlayer.weight} lbs
-                      </span>
-                    </div>
-                    <div>
-                      <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                        Level
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                        {selectedPlayer.level}
-                      </span>
-                    </div>
-                    {selectedPlayer.school && (
-                      <div style={{ gridColumn: "1 / -1" }}>
-                        <span style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>
-                          School
-                        </span>
-                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#333" }}>
-                          {selectedPlayer.school}
-                        </span>
-                      </div>
-                    )}
                   </div>
-                )}
+                  <div>
+                    <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>Height</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.height || '6\'3"'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>Weight</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.weight || '200'}lbs</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>Age</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>
+                      {selectedPlayer.date_of_birth 
+                        ? Math.floor((new Date() - new Date(selectedPlayer.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000)) 
+                        : '30'} yo
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Player Details List */}
+              <div style={{
+                background: "rgba(255, 255, 255, 0.75)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "16px",
+                fontSize: "15px",
+                color: "#2c3e50",
+              }}>
+                <div style={{ marginBottom: "12px" }}>
+                  <strong>Level:</strong> {selectedPlayer.level || 'N/A'}
+                </div>
+                <div style={{ marginBottom: "12px" }}>
+                  <strong>School:</strong> {selectedPlayer.school || 'N/A'}
+                </div>
+                <div style={{ marginBottom: "12px" }}>
+                  <strong>Bats:</strong> {selectedPlayer.bats === 'R' ? 'Right' : selectedPlayer.bats === 'L' ? 'Left' : 'N/A'}
+                </div>
+                <div>
+                  <strong>Throws:</strong> {selectedPlayer.throws === 'R' ? 'Right' : selectedPlayer.throws === 'L' ? 'Left' : 'N/A'}
+                </div>
+              </div>
+
+              {/* Effective Speed Card */}
+              <div style={{
+                background: "rgba(255, 255, 255, 0.75)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "16px",
+              }}>
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#2c3e50",
+                  marginBottom: "12px",
+                  textAlign: "center",
+                }}>
+                  Effective Speed
+                </div>
+                <div style={{
+                  fontSize: "14px",
+                  color: "#555",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                }}>
+                  {selectedPlayer.velocity === "-3%" && "5% decrease over the last 5 games compared to year average."}
+                  {selectedPlayer.velocity === "-2%" && "2% decrease over the last 5 games compared to year average."}
+                  {selectedPlayer.velocity === "+1%" && "1% increase over the last 5 games compared to year average."}
+                  {!selectedPlayer.velocity && "No velocity data available."}
+                </div>
+              </div>
+
+              {/* Spin Rate Card */}
+              <div style={{
+                background: "rgba(255, 255, 255, 0.75)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "16px",
+              }}>
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#2c3e50",
+                  marginBottom: "12px",
+                  textAlign: "center",
+                }}>
+                  Spin rate
+                </div>
+                <div style={{
+                  fontSize: "14px",
+                  color: "#555",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                }}>
+                  {selectedPlayer.spinRate === "-0%" && "0% change over the last 5 games compared to year average."}
+                  {selectedPlayer.spinRate === "-4%" && "4% decrease over the last 5 games compared to year average."}
+                  {selectedPlayer.spinRate === "-2%" && "2% decrease over the last 5 games compared to year average."}
+                  {selectedPlayer.spinRate === "-1%" && "1% decrease over the last 5 games compared to year average."}
+                  {!selectedPlayer.spinRate && "No spin rate data available."}
+                </div>
+              </div>
+
+              {/* Warning Card */}
+              <div style={{
+                background: "rgba(231, 76, 60, 0.75)",
+                borderRadius: "12px",
+                padding: "20px",
+                marginBottom: "20px",
+                color: "white",
+              }}>
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  marginBottom: "12px",
+                  textAlign: "center",
+                }}>
+                  WARNING
+                </div>
+                <div style={{
+                  fontSize: "14px",
+                  lineHeight: "1.6",
+                  textAlign: "center",
+                }}>
+                  {selectedPlayer.fatigueScore > 20 
+                    ? "This pitcher is presenting similar signs of fatigue that leads to Rotator Cuff."
+                    : selectedPlayer.fatigueScore > 10
+                    ? "This pitcher is showing moderate signs of fatigue. Monitor closely."
+                    : "This pitcher is in good condition with minimal fatigue indicators."}
+                </div>
               </div>
 
               {/* Game Record Form */}
@@ -512,68 +637,16 @@ const getPlayerImage = (mlbPlayerId) => {
                   playerId={selectedPlayer.player_id} 
                   onSuccess={() => {
                     console.log('Game record added successfully');
+                    // Optionally refresh player data here
                   }}
                 />
               </div>
             </>
           )}
 
-          {/* Roster View with Add Player Button */}
+          {/* Roster View */}
           {currentView === 'roster' && (
             <>
-              {/* Add Player Button */}
-              <button
-                onClick={() => setShowAddPlayerForm(!showAddPlayerForm)}
-                style={{
-                  width: "100%",
-                  background: "rgba(255, 255, 255, 0.95)",
-                  color: "#7b6ca8",
-                  border: "none",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  marginBottom: "20px",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "10px",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
-                }}
-              >
-                <span style={{ fontSize: "20px" }}>➕</span>
-                {showAddPlayerForm ? 'Hide Add Player Form' : 'Add New Player'}
-              </button>
-
-              {/* Add Player Form */}
-              {showAddPlayerForm && (
-                <div style={{
-                  background: "rgba(255, 255, 255, 0.95)",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  marginBottom: "20px",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                }}>
-                  <h3 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "15px", color: "#333" }}>
-                    Add New Player
-                  </h3>
-                  <GameRecordForm 
-                    playerId={null}
-                    onSuccess={handleAddPlayerSuccess}
-                  />
-                </div>
-              )}
-
               {/* Players List */}
               <div style={{
                 display: "flex",
@@ -585,156 +658,522 @@ const getPlayerImage = (mlbPlayerId) => {
                   <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
                     Loading players...
                   </div>
+                ) : players.length === 0 ? (
+                  <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
+                    No players found. Please add players to your roster.
+                  </div>
                 ) : (
-                  players.map((player) => (
-                    <div 
-                      key={player.player_id} 
-                      onClick={() => handlePlayerClick(player)}
-                      style={{
-                        background: "linear-gradient(135deg, #8b6b9e 0%, #7b6ca8 100%)",
-                        borderRadius: "12px",
-                        padding: "16px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "15px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                        transition: "all 0.3s ease",
-                        cursor: "pointer",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.25)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
-                      }}
-                    >
-                      <div style={{
-                        color: "white",
-                        fontSize: "24px",
-                        fontWeight: 700,
-                        minWidth: "40px",
-                        textAlign: "center",
-                      }}>
-                        #{player.player_id}
-                      </div>
-
-                      {/* Player Image Container */}
-                      <div style={{ position: "relative" }}>
-                        {playerMLBIds[player.player_id] && (
-                          <img
-                            src={getPlayerImage(playerMLBIds[player.player_id])}
-                            alt={`${player.first_name} ${player.last_name}`}
-                            style={{
-                              width: "70px",
-                              height: "70px",
-                              borderRadius: "10px",
-                              objectFit: "cover",
-                              backgroundColor: "rgba(255, 255, 255, 0.2)",
-                              display: "block",
-                            }}
-                            onError={(e) => {
-                              console.log('Image failed to load for:', player.first_name, player.last_name);
-                              e.currentTarget.style.display = 'none';
-                              if (e.currentTarget.nextElementSibling) {
-                                e.currentTarget.nextElementSibling.style.display = 'flex';
-                              }
-                            }}
-                          />
-                        )}
-                        {/* Player avatar placeholder */}
-                        <div style={{
-                          width: "70px",
-                          height: "70px",
-                          borderRadius: "10px",
-                          background: "rgba(255, 255, 255, 0.2)",
-                          display: playerMLBIds[player.player_id] ? "none" : "flex",
+players.map((player, index) => {
+                    // Placeholder stats
+                    const fatigueScores = [33, 28, 19, 14, 8];
+                    const fatigueScore = fatigueScores[index % fatigueScores.length];
+                    
+                    const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
+                    const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
+                    
+                    const velocity = velocities[index % velocities.length];
+                    const spinRate = spinRates[index % spinRates.length];
+                    
+                    // Determine border color based on fatigue score
+                    let borderColor;
+                    if (fatigueScore > 20) {
+                      borderColor = "rgba(231, 76, 60, 0.4)";
+                    } else if (fatigueScore > 10) {
+                      borderColor = "rgba(155, 89, 182, 0.4)";
+                    } else {
+                      borderColor = "rgba(52, 152, 219, 0.4)";
+                    }
+                    
+                    return (
+                      <div 
+                        key={player.player_id}
+                        onClick={() => handlePlayerClick(player, index)}
+                        style={{
+                          background: "rgba(255, 255, 255, 0.95)",
+                          borderRadius: "16px",
+                          padding: "16px",
+                          display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "32px",
-                          flexShrink: 0,
-                          position: playerMLBIds[player.player_id] ? "absolute" : "relative",
-                          top: 0,
-                          left: 0,
-                        }}>
-                          👤
+                          gap: "15px",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                          transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          border: `5px solid ${borderColor}`,
+                          position: "relative",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                        }}
+                      >
+                        {/* Player Photo with MLB Image */}
+                        <div style={{ position: "relative" }}>
+                          {playerMLBIds[player.player_id] && (
+                            <img
+                              src={getPlayerImage(playerMLBIds[player.player_id])}
+                              alt={`${player.first_name} ${player.last_name}`}
+                              style={{
+                                width: "70px",
+                                height: "70px",
+                                borderRadius: "12px",
+                                objectFit: "cover",
+                                backgroundColor: "#e9ecef",
+                                display: "block",
+                              }}
+                              onError={(e) => {
+                                console.log('Image failed to load for:', player.first_name, player.last_name);
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextElementSibling) {
+                                  e.currentTarget.nextElementSibling.style.display = 'flex';
+                                }
+                              }}
+                            />
+                          )}
+                          {/* Placeholder avatar */}
+                          <div style={{
+                            width: "70px",
+                            height: "70px",
+                            borderRadius: "12px",
+                            background: "linear-gradient(135deg, #e8d5d5 0%, #d5c8e8 100%)",
+                            display: playerMLBIds[player.player_id] ? "none" : "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "32px",
+                            flexShrink: 0,
+                            position: playerMLBIds[player.player_id] ? "absolute" : "relative",
+                            top: 0,
+                            left: 0,
+                          }}>
+                            👤
+                          </div>
                         </div>
-                      </div>
 
-                      <div style={{ flex: 1, textAlign: "left" }}>
-                        <div style={{
-                          color: "white",
-                          fontSize: "16px",
-                          fontWeight: 600,
-                          marginBottom: "6px",
-                        }}>
-                          {player.first_name} {player.last_name}
+                        {/* Player Info */}
+                        <div style={{ flex: 1, textAlign: "left" }}>
+                          <div style={{
+                            color: "#2c3e50",
+                            fontSize: "15px",
+                            fontWeight: 700,
+                            marginBottom: "8px",
+                          }}>
+                            #{player.player_id} {player.first_name} {player.last_name}
+                          </div>
+                          
+                          <div style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px",
+                            fontSize: "13px",
+                            color: "#7f8c8d",
+                          }}>
+                            <div>
+                              <span style={{ fontWeight: 600 }}>Velocity:</span> {velocity}
+                            </div>
+                            <div>
+                              <span style={{ fontWeight: 600 }}>Spin Rate:</span> {spinRate}
+                            </div>
+                            <div 
+                              style={{
+                                color: "#3498db",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                              }}
+                            >
+                              See More
+                            </div>
+                          </div>
                         </div>
+
+                        {/* Fatigue Score */}
                         <div style={{
                           display: "flex",
-                          gap: "12px",
-                          fontSize: "13px",
-                          color: "rgba(255, 255, 255, 0.85)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexDirection: "column",
+                          marginRight: "8px",
                         }}>
                           <div style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
+                            fontSize: "28px",
+                            fontWeight: 700,
+                            color: fatigueScore > 20 ? "#e74c3c" : fatigueScore > 10 ? "#9b59b6" : "#3498db",
+                            lineHeight: "1",
+                            marginBottom: "4px",
                           }}>
-                            <span style={{ fontSize: "11px", opacity: 0.8 }}>Team</span>
-                            <span style={{ fontWeight: 600, fontSize: "14px" }}>
-                              {player.team_name || "TOR"}
-                            </span>
+                            {fatigueScore}
                           </div>
                           <div style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
+                            fontSize: "11px",
+                            color: "#95a5a6",
+                            fontWeight: 600,
+                            textAlign: "center",
                           }}>
-                            <span style={{ fontSize: "11px", opacity: 0.8 }}>ID</span>
-                            <span style={{ fontWeight: 600, fontSize: "14px" }}>
-                              {player.player_id}
-                            </span>
+                            Fatigue Score
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </>
           )}
 
           {/* Stats View */}
-          {currentView === 'stats' && (
-            <div style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              borderRadius: "12px",
-              padding: "20px",
-              marginBottom: "20px",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-              textAlign: "center",
-            }}>
-              <h3 style={{ color: "#333", fontSize: "20px" }}>Team Statistics</h3>
-              <p style={{ color: "#666", marginTop: "10px" }}>Coming soon...</p>
+{currentView === 'stats' && (
+  <div style={{
+    marginBottom: "20px",
+  }}>
+    <h3 style={{ 
+      color: "white", 
+      fontSize: "28px", 
+      fontWeight: 700,
+      marginBottom: "25px",
+      textAlign: "center",
+      textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+    }}>
+      Team Performance Map
+    </h3>
+    
+    {/* Chart Container with Labels */}
+    <div style={{ position: "relative", paddingLeft: "50px", paddingBottom: "50px", paddingTop: "10px" }}>
+      {/* Y-Axis Label */}
+      <div style={{
+        position: "absolute",
+        left: "10px",
+        top: "50%",
+        transform: "translateY(-50%) rotate(-90deg)",
+        color: "white",
+        fontSize: "18px",
+        fontWeight: 700,
+        letterSpacing: "0.5px",
+        whiteSpace: "nowrap",
+        textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+      }}>
+        Spin Rate →
+      </div>
+
+      {/* Chart Area */}
+      <div style={{
+        position: "relative",
+        width: "100%",
+        height: "500px",
+        background: "linear-gradient(to top right, #e74c3c 0%, #c0392b 15%, #9b59b6 35%, #8e44ad 50%, #3498db 70%, #2980b9 100%)",
+        borderRadius: "16px",
+        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
+      }}>
+        {/* Player Pins */}
+        {players.map((player, index) => {
+          // Generate positions based on placeholder data
+          const positions = [
+            { x: 15, y: 75 },  // Low velocity, low spin (red zone - bottom left)
+            { x: 30, y: 60 },  // Low-medium velocity, medium spin
+            { x: 50, y: 50 },  // Medium velocity, medium spin (purple zone)
+            { x: 70, y: 30 },  // High velocity, high spin (blue zone)
+            { x: 85, y: 15 },  // Very high velocity, very high spin (deep blue - top right)
+          ];
+          
+          const position = positions[index % positions.length];
+          
+          return (
+            <div
+              key={player.player_id}
+              onClick={() => handlePlayerClick(player, index)}
+              style={{
+                position: "absolute",
+                left: `${position.x}%`,
+                top: `${position.y}%`,
+                transform: "translate(-50%, -50%)",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                zIndex: 10,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.15)";
+                e.currentTarget.style.zIndex = "20";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
+                e.currentTarget.style.zIndex = "10";
+              }}
+            >
+              {/* Pin */}
+              <svg width="60" height="70" viewBox="0 0 60 70" style={{
+                filter: "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))",
+              }}>
+                <path
+                  d="M30 0C20.335 0 12.5 7.835 12.5 17.5c0 9.665 17.5 52.5 17.5 52.5s17.5-42.835 17.5-52.5C47.5 7.835 39.665 0 30 0z"
+                  fill="#ffffff"
+                  stroke="rgba(0, 0, 0, 0.15)"
+                  strokeWidth="1.5"
+                />
+                <circle cx="30" cy="17.5" r="14" fill="rgba(44, 62, 80, 0.95)" />
+                <text
+                  x="30"
+                  y="23.5"
+                  textAnchor="middle"
+                  fill="white"
+                  fontSize="14"
+                  fontWeight="700"
+                >
+                  #{player.player_id}
+                </text>
+              </svg>
             </div>
-          )}
+          );
+        })}
+
+        {/* Legend */}
+        <div style={{
+          position: "absolute",
+          top: "16px",
+          right: "16px",
+          background: "rgba(0, 0, 0, 0.6)",
+          backdropFilter: "blur(10px)",
+          borderRadius: "12px",
+          padding: "14px 16px",
+          fontSize: "13px",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <div style={{ width: "16px", height: "16px", background: "#2980b9", borderRadius: "3px", border: "1px solid rgba(255, 255, 255, 0.3)" }}></div>
+            <span style={{ color: "white", fontWeight: 600 }}>Performance Normal</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <div style={{ width: "16px", height: "16px", background: "#9b59b6", borderRadius: "3px", border: "1px solid rgba(255, 255, 255, 0.3)" }}></div>
+            <span style={{ color: "white", fontWeight: 600 }}>Signs of Fatigue</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ width: "16px", height: "16px", background: "#e74c3c", borderRadius: "3px", border: "1px solid rgba(255, 255, 255, 0.3)" }}></div>
+            <span style={{ color: "white", fontWeight: 600 }}>Fatigued</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Y-Axis Label */}
+      <div style={{
+        position: "absolute",
+        left: "-30px",
+        top: "50%",
+        transform: "translateY(-50%) rotate(-90deg)",
+        color: "white",
+        fontSize: "20px",
+        fontWeight: 700,
+        letterSpacing: "1px",
+        textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+      }}>
+        Spin Rate →
+      </div>
+      {/* X-Axis Label */}
+      <div style={{
+        position: "absolute",
+        bottom: "10px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        color: "white",
+        fontSize: "18px",
+        fontWeight: 700,
+        letterSpacing: "0.5px",
+        textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+      }}>
+        Velocity →
+      </div>
+    </div>
+
+    <p style={{ 
+      color: "white", 
+      fontSize: "15px", 
+      marginTop: "20px",
+      textAlign: "center",
+      lineHeight: "1.6",
+      fontWeight: 500,
+      textShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+    }}>
+      Click on any player to view detailed performance metrics
+    </p>
+  </div>
+)}
 
           {/* Download View */}
-          {currentView === 'download' && (
-            <div style={{
-              background: "rgba(255, 255, 255, 0.95)",
-              borderRadius: "12px",
-              padding: "20px",
-              marginBottom: "20px",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-              textAlign: "center",
-            }}>
-              <h3 style={{ color: "#333", fontSize: "20px" }}>Download Reports</h3>
-              <p style={{ color: "#666", marginTop: "10px" }}>Coming soon...</p>
-            </div>
-          )}
+{currentView === 'download' && (
+  <div style={{
+    marginBottom: "20px",
+  }}>
+    <h3 style={{ 
+      color: "white", 
+      fontSize: "28px", 
+      fontWeight: 700,
+      marginBottom: "25px",
+      textAlign: "center",
+      textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+    }}>
+      Download Report
+    </h3>
+
+    {/* Team Summary Section */}
+    <div style={{
+      background: "rgba(255, 255, 255, 0.95)",
+      borderRadius: "16px",
+      padding: "24px",
+      marginBottom: "20px",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+    }}>
+      <h4 style={{
+        color: "#2c3e50",
+        fontSize: "20px",
+        fontWeight: 700,
+        marginBottom: "12px",
+      }}>
+        Team Summary Report
+      </h4>
+      <p style={{
+        color: "#7f8c8d",
+        fontSize: "14px",
+        marginBottom: "20px",
+        lineHeight: "1.6",
+      }}>
+        Download a comprehensive PDF report containing all player data, fatigue scores, warnings, and performance metrics.
+      </p>
+      <button
+        onClick={() => {
+          console.log('Team data download clicked');
+          // Functionality to be added later
+        }}
+        style={{
+          width: "100%",
+          background: "linear-gradient(135deg, #3498db 0%, #2980b9 100%)",
+          color: "white",
+          border: "none",
+          borderRadius: "12px",
+          padding: "16px",
+          fontSize: "16px",
+          fontWeight: 700,
+          cursor: "pointer",
+          transition: "all 0.3s ease",
+          boxShadow: "0 4px 12px rgba(52, 152, 219, 0.3)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 6px 16px rgba(52, 152, 219, 0.4)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 4px 12px rgba(52, 152, 219, 0.3)";
+        }}
+      >
+        📄 Download Team Data
+      </button>
+    </div>
+
+    {/* Individual Player Section */}
+    <div style={{
+      background: "rgba(255, 255, 255, 0.95)",
+      borderRadius: "16px",
+      padding: "24px",
+      marginBottom: "20px",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+    }}>
+      <h4 style={{
+        color: "#2c3e50",
+        fontSize: "20px",
+        fontWeight: 700,
+        marginBottom: "12px",
+      }}>
+        Individual Player Report
+      </h4>
+      <p style={{
+        color: "#7f8c8d",
+        fontSize: "14px",
+        marginBottom: "20px",
+        lineHeight: "1.6",
+      }}>
+        Select a player to download their individual performance report.
+      </p>
+      
+      <select
+        value={selectedPlayer?.player_id || ''}
+        onChange={(e) => {
+          const playerId = e.target.value;
+          if (playerId) {
+            const player = players.find(p => p.player_id.toString() === playerId);
+            const index = players.findIndex(p => p.player_id.toString() === playerId);
+            
+            if (player && index !== -1) {
+              const fatigueScores = [33, 28, 19, 14, 8];
+              const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
+              const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
+              
+              setSelectedPlayer({
+                ...player,
+                fatigueScore: fatigueScores[index % fatigueScores.length],
+                velocity: velocities[index % velocities.length],
+                spinRate: spinRates[index % spinRates.length],
+              });
+            }
+          } else {
+            setSelectedPlayer(null);
+          }
+        }}
+        style={{
+          width: "100%",
+          padding: "14px 16px",
+          border: "2px solid #e0e0e0",
+          borderRadius: "10px",
+          fontSize: "15px",
+          background: "white",
+          color: selectedPlayer ? "#2c3e50" : "#999",
+          outline: "none",
+          cursor: "pointer",
+          marginBottom: "16px",
+          transition: "all 0.3s ease",
+        }}
+      >
+        <option value="">Select a Player</option>
+        {players.map((player) => (
+          <option key={player.player_id} value={player.player_id}>
+            #{player.player_id} - {player.first_name} {player.last_name}
+          </option>
+        ))}
+      </select>
+
+      {selectedPlayer && (
+        <button
+          onClick={() => {
+            console.log(`Download clicked for ${selectedPlayer.first_name} ${selectedPlayer.last_name}`);
+            // Functionality to be added later
+          }}
+          style={{
+            width: "100%",
+          padding: "14px 16px",
+          border: "2px solid #e0e0e0",
+          borderRadius: "10px",
+          fontSize: "15px",
+          background: "white",
+          color: selectedPlayer ? "#2c3e50" : "#999",
+          outline: "none",
+          cursor: "pointer",
+          marginBottom: "16px",
+          transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 6px 16px rgba(155, 89, 182, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(155, 89, 182, 0.3)";
+          }}
+        >
+          📊 Download {selectedPlayer.first_name} {selectedPlayer.last_name}'s Report
+        </button>
+      )}
+    </div>
+  </div>
+)}
 
           {/* Bottom Navigation */}
           <div style={{
