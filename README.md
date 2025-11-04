@@ -61,12 +61,10 @@ Then fill in the values with the correct Supabase credentials (provided by the t
 
 ### 4. Running the Project Locally
 
-Note that you may have to run npm install bcrypt before running.
-
 #### Start the Backend Server
 ```bash
 cd backend
-npm run dev
+npm run start
 ```
 Server should start at:
 ```

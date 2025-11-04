@@ -1,47 +1,47 @@
 // backend/server.js
 const express = require('express');
 const cors = require('cors');
-const pool = require('./db');
 const bcrypt = require('bcrypt');
+
+// Data access layer imports
+const UserDataAccessSQL = require('./data/userDataAccessSQL');
+const PlayerDataAccessSQL = require('./data/playerDataAccessSQL');
+const GameDataAccessSQL = require('./data/gameDataAccessSQL');
+
+// Initialize data access classes
+const userDAO = new UserDataAccessSQL();
+const playerDAO = new PlayerDataAccessSQL();
+const gameDAO = new GameDataAccessSQL();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Sign up route
+/* -----------------------------------
+   AUTH ROUTES
+----------------------------------- */
+
+// Signup route
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { email, password, teamName } = req.body;
-    
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Check if user exists
-    const existingUser = await pool.query(
-      'SELECT * FROM coaches_credentials WHERE username = $1',
-      [email]
-    );
-
-    if (existingUser.rows.length > 0) {
+    // Check if user already exists
+    const existingUser = await userDAO.getUserByEmail(email);
+    if (existingUser) {
       return res.status(409).json({ error: 'User already exists' });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insert new coach with default team_name if not provided
     const defaultTeamName = teamName || 'Unassigned';
-    
-    const result = await pool.query(
-      'INSERT INTO coaches_credentials (username, password, team_name) VALUES ($1, $2, $3) RETURNING coach_id, username, team_name',
-      [email, hashedPassword, defaultTeamName]
-    );
 
-    res.status(201).json({
-      message: 'User created successfully',
-      user: result.rows[0]
-    });
+    // Create user
+    const newUser = await userDAO.createUser(email, hashedPassword, defaultTeamName);
+    res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (err) {
     console.error('Error during signup:', err);
     res.status(500).json({ error: 'Server error' });
@@ -52,27 +52,19 @@ app.post('/api/auth/signup', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
     // Find user
-    const result = await pool.query(
-      'SELECT * FROM coaches_credentials WHERE username = $1',
-      [email]
-    );
-
-    if (result.rows.length === 0) {
+    const user = await userDAO.getUserByEmail(email);
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const user = result.rows[0];
-
-    // Compare passwords
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
+    // Check password
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -81,8 +73,8 @@ app.post('/api/auth/login', async (req, res) => {
       user: {
         coach_id: user.coach_id,
         username: user.username,
-        team_name: user.team_name
-      }
+        team_name: user.team_name,
+      },
     });
   } catch (err) {
     console.error('Error during login:', err);
@@ -90,27 +82,37 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Test route
+/* -----------------------------------
+   BASIC TEST ROUTE
+----------------------------------- */
+
 app.get('/', (req, res) => {
   res.send('SafePitch API is running...');
 });
 
-// Get all coaches
+/* -----------------------------------
+   COACH ROUTES
+----------------------------------- */
+
 app.get('/api/coaches', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM coaches_credentials');
-    res.json(result.rows);
+    const coaches = await userDAO.getAllUsers();
+    res.json(coaches);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error('Error fetching coaches:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
+
+/* -----------------------------------
+   PLAYER ROUTES
+----------------------------------- */
 
 // Get all players
 app.get('/api/players', async (req, res) => {
   try {
-    const result = await pool.query('SELECT player_id, first_name, last_name, team_name FROM players');
-    res.json(result.rows);
+    const players = await playerDAO.getAllPlayers();
+    res.json(players);
   } catch (err) {
     console.error('Error fetching players:', err);
     res.status(500).json({ error: 'Server error' });
@@ -121,31 +123,31 @@ app.get('/api/players', async (req, res) => {
 app.get('/api/players/:id/info', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const result = await pool.query(
-      'SELECT * FROM players_personal_info WHERE player_id = $1',
-      [id]
-    );
-    
-    if (result.rows.length === 0) {
+    const playerInfo = await playerDAO.getPlayerInfoById(id);
+
+    if (!playerInfo) {
       return res.status(404).json({ error: 'Player not found' });
     }
-    
-    res.json(result.rows[0]);
+
+    res.json(playerInfo);
   } catch (err) {
     console.error('Error fetching player info:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
+/* -----------------------------------
+   GAME ROUTES
+----------------------------------- */
+
 // Get all game records
 app.get('/api/games', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM players_games_records ORDER BY game_date DESC');
-    res.json(result.rows);
+    const games = await gameDAO.getAllGames();
+    res.json(games);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error('Error fetching games:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -153,13 +155,10 @@ app.get('/api/games', async (req, res) => {
 app.get('/api/games/player/:playerId', async (req, res) => {
   try {
     const { playerId } = req.params;
-    const result = await pool.query(
-      'SELECT * FROM players_games_records WHERE player_id = $1 ORDER BY game_date DESC',
-      [playerId]
-    );
-    res.json(result.rows);
+    const games = await gameDAO.getGamesByPlayerId(playerId);
+    res.json(games);
   } catch (err) {
-    console.error('Error fetching game records:', err);
+    console.error('Error fetching player games:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -167,62 +166,26 @@ app.get('/api/games/player/:playerId', async (req, res) => {
 // Add a new game record
 app.post('/api/games', async (req, res) => {
   try {
-    const {
-      player_id,
-      game_date,
-      pitch_type,
-      release_speed,
-      spin_rate,
-      release_pos_x,
-      release_pos_y,
-      release_pos_z,
-    } = req.body;
+    const gameData = req.body;
 
-    // Validate required fields
-    if (!player_id || !game_date || !pitch_type || release_speed === '' || spin_rate === '') {
-      return res.status(400).json({ 
-        error: 'Missing required fields: player_id, game_date, pitch_type, release_speed, spin_rate' 
+    if (!gameData.player_id || !gameData.game_date || !gameData.pitch_type ||
+        gameData.release_speed === '' || gameData.spin_rate === '') {
+      return res.status(400).json({
+        error: 'Missing required fields: player_id, game_date, pitch_type, release_speed, spin_rate',
       });
     }
 
-    // Validate that player exists
-    const playerCheck = await pool.query(
-      'SELECT player_id FROM players WHERE player_id = $1',
-      [player_id]
-    );
-
-    if (playerCheck.rows.length === 0) {
-      return res.status(404).json({ error: `Player with ID ${player_id} not found` });
+    // Validate player existence using playerDAO
+    const player = await playerDAO.getPlayerInfoById(gameData.player_id);
+    if (!player) {
+      return res.status(404).json({ error: `Player with ID ${gameData.player_id} not found` });
     }
 
-    // Convert empty strings to NULL for optional fields
-    const posX = release_pos_x === '' ? null : parseFloat(release_pos_x);
-    const posY = release_pos_y === '' ? null : parseFloat(release_pos_y);
-    const posZ = release_pos_z === '' ? null : parseFloat(release_pos_z);
-
-    // Insert game record (record_id is auto-generated by database)
-    const result = await pool.query(
-      `INSERT INTO players_games_records 
-       (player_id, game_date, pitch_type, release_speed, spin_rate, release_pos_x, release_pos_y, release_pos_z)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        player_id, 
-        game_date, 
-        pitch_type, 
-        parseFloat(release_speed), 
-        parseInt(spin_rate), 
-        posX, 
-        posY, 
-        posZ
-      ]
-    );
-
-    console.log('Game record added:', result.rows[0]);
-    res.status(201).json(result.rows[0]);
+    const newRecord = await gameDAO.addGameRecord(gameData);
+    res.status(201).json(newRecord);
   } catch (err) {
     console.error('Error adding game record:', err);
-    res.status(500).json({ error: 'Server error: ' + err.message });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -230,35 +193,14 @@ app.post('/api/games', async (req, res) => {
 app.put('/api/games/:recordId', async (req, res) => {
   try {
     const { recordId } = req.params;
-    const {
-      game_date,
-      pitch_type,
-      release_speed,
-      spin_rate,
-      release_pos_x,
-      release_pos_y,
-      release_pos_z,
-    } = req.body;
+    const gameData = req.body;
 
-    // Convert empty strings to NULL for optional fields
-    const posX = release_pos_x === '' ? null : parseFloat(release_pos_x);
-    const posY = release_pos_y === '' ? null : parseFloat(release_pos_y);
-    const posZ = release_pos_z === '' ? null : parseFloat(release_pos_z);
-
-    const result = await pool.query(
-      `UPDATE players_games_records 
-       SET game_date = $1, pitch_type = $2, release_speed = $3, spin_rate = $4, 
-           release_pos_x = $5, release_pos_y = $6, release_pos_z = $7
-       WHERE record_id = $8
-       RETURNING *`,
-      [game_date, pitch_type, release_speed, spin_rate, posX, posY, posZ, recordId]
-    );
-
-    if (result.rows.length === 0) {
+    const updatedRecord = await gameDAO.updateGameRecord(recordId, gameData);
+    if (!updatedRecord) {
       return res.status(404).json({ error: 'Game record not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json(updatedRecord);
   } catch (err) {
     console.error('Error updating game record:', err);
     res.status(500).json({ error: 'Server error' });
@@ -270,21 +212,21 @@ app.delete('/api/games/:recordId', async (req, res) => {
   try {
     const { recordId } = req.params;
 
-    const result = await pool.query(
-      'DELETE FROM players_games_records WHERE record_id = $1 RETURNING *',
-      [recordId]
-    );
-
-    if (result.rows.length === 0) {
+    const deletedRecord = await gameDAO.deleteGameRecord(recordId);
+    if (!deletedRecord) {
       return res.status(404).json({ error: 'Game record not found' });
     }
 
-    res.json({ message: 'Game record deleted', deleted: result.rows[0] });
+    res.json({ message: 'Game record deleted', deleted: deletedRecord });
   } catch (err) {
     console.error('Error deleting game record:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+/* -----------------------------------
+   SERVER START
+----------------------------------- */
 
 const PORT = 5001;
 app.listen(PORT, () => {
