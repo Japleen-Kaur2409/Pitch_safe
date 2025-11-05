@@ -1,12 +1,7 @@
-// frontend/src/frameworks-drivers/components/GameRecordForm.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { gameRecordService } from '../services/gameRecordService';
 
-const GameRecordForm = ({ 
-  playerId, 
-  onSuccess,
-  gameController,
-  gameState 
-}) => {
+export default function GameRecordForm({ playerId, onSuccess }) {
   const [formData, setFormData] = useState({
     player_id: playerId || '',
     game_date: '',
@@ -18,27 +13,40 @@ const GameRecordForm = ({
     release_pos_z: '',
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'player_id' || name === 'release_speed' || name === 'spin_rate' || 
+              name === 'release_pos_x' || name === 'release_pos_y' || name === 'release_pos_z' 
+              ? (value === '' ? '' : Number(value)) 
+              : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate player_id
-    if (!formData.player_id) {
-      console.error('Please select a player');
-      return;
-    }
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-    await gameController.handleAddGameRecord(formData);
-    
-    // Reset form on success
-    if (!gameState.addGameRecordError) {
+    try {
+      // Validate required fields
+      if (!formData.player_id || !formData.game_date || !formData.pitch_type || 
+          !formData.release_speed || !formData.spin_rate) {
+        setError('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
+
+      await gameRecordService.addGameRecord(formData);
+      setSuccess('Game record added successfully!');
+      
+      // Reset form
       setFormData({
         player_id: playerId || '',
         game_date: '',
@@ -51,6 +59,10 @@ const GameRecordForm = ({
       });
       
       if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err.message || 'Failed to add game record');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,7 +103,7 @@ const GameRecordForm = ({
     }}>
       <h2 style={{ marginTop: '0', marginBottom: '20px', color: '#333' }}>Add Game Record</h2>
 
-      {gameState.addGameRecordError && (
+      {error && (
         <div style={{
           padding: '12px',
           backgroundColor: '#fee',
@@ -101,11 +113,11 @@ const GameRecordForm = ({
           marginBottom: '16px',
           fontSize: '14px',
         }}>
-          {gameState.addGameRecordError}
+          {error}
         </div>
       )}
 
-      {gameState.addGameRecordSuccess && (
+      {success && (
         <div style={{
           padding: '12px',
           backgroundColor: '#efe',
@@ -115,12 +127,12 @@ const GameRecordForm = ({
           marginBottom: '16px',
           fontSize: '14px',
         }}>
-          Game record added successfully!
+          {success}
         </div>
       )}
 
       <div style={containerStyle}>
-        {/* Player ID */}
+        {/* Player ID - Can be edited if not pre-filled */}
         <div style={fullWidthStyle}>
           <label style={labelStyle}>
             Player ID *
@@ -258,24 +270,24 @@ const GameRecordForm = ({
 
       <button
         type="submit"
-        disabled={gameState.addGameRecordLoading}
+        disabled={loading}
         style={{
           width: '100%',
           padding: '12px',
-          backgroundColor: gameState.addGameRecordLoading ? '#ccc' : '#007bff',
+          backgroundColor: loading ? '#ccc' : '#007bff',
           color: 'white',
           border: 'none',
           borderRadius: '6px',
           fontSize: '16px',
           fontWeight: '600',
-          cursor: gameState.addGameRecordLoading ? 'not-allowed' : 'pointer',
+          cursor: loading ? 'not-allowed' : 'pointer',
           transition: 'background-color 0.3s',
           marginTop: '16px',
         }}
-        onMouseEnter={(e) => !gameState.addGameRecordLoading && (e.target.style.backgroundColor = '#0056b3')}
-        onMouseLeave={(e) => !gameState.addGameRecordLoading && (e.target.style.backgroundColor = '#007bff')}
+        onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#0056b3')}
+        onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#007bff')}
       >
-        {gameState.addGameRecordLoading ? 'Submitting...' : 'Add Game Record'}
+        {loading ? 'Submitting...' : 'Add Game Record'}
       </button>
 
       <p style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>
@@ -283,6 +295,4 @@ const GameRecordForm = ({
       </p>
     </form>
   );
-};
-
-export default GameRecordForm;
+}
