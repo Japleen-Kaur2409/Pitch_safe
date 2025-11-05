@@ -1,20 +1,24 @@
 {
-  "name": "backend",
+  "name": "pitchsafe-backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "PitchSafe Backend with Clean Architecture",
+  "main": "frameworks-drivers/web/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node frameworks-drivers/web/server.js",
+    "dev": "nodemon frameworks-drivers/web/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
     "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
