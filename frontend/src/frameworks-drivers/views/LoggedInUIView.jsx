@@ -63,7 +63,31 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
     });
 
     // Load players on mount
-    playerController.handleGetAllPlayers();
+    // Load players on mount and fetch MLB IDs for all players
+    const loadPlayersAndMLBData = async () => {
+      await playerController.handleGetAllPlayers();
+      
+      // After players are loaded, fetch MLB IDs for all of them
+      const currentPlayers = playerViewModel.getState().players;
+      console.log('Preloading MLB data for', currentPlayers.length, 'players');
+      
+      // Fetch MLB IDs for all players in parallel
+      const mlbIdPromises = currentPlayers.map(player => 
+        playerController.handleFetchMLBPlayerId(
+          player.player_id,
+          player.first_name,
+          player.last_name
+        ).catch(error => {
+          console.warn(`Failed to fetch MLB ID for ${player.first_name} ${player.last_name}:`, error);
+          return null; // Don't let one failure stop others
+        })
+      );
+      
+      await Promise.all(mlbIdPromises);
+      console.log('MLB data preloading complete');
+    };
+    
+    loadPlayersAndMLBData();
 
     return () => {
       console.log('Cleaning up subscriptions');
@@ -113,21 +137,8 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
       console.error('Error fetching player detail:', error);
     }
     
-    // Fetch MLB ID if not already available
-    if (!playerState.playerMLBIds[player.player_id]) {
-      console.log('Fetching MLB ID for player:', player.first_name, player.last_name);
-      try {
-        await playerController.handleFetchMLBPlayerId(
-          player.player_id, 
-          player.first_name, 
-          player.last_name
-        );
-      } catch (error) {
-        console.error('Error fetching MLB ID:', error);
-      }
-    } else {
-      console.log('MLB ID already cached:', playerState.playerMLBIds[player.player_id]);
-    }
+    // MLB IDs are already preloaded at login, no need to fetch again
+    console.log('Using preloaded MLB ID:', playerState.playerMLBIds[player.player_id]);
   };
 
   const handleBackClick = () => {
