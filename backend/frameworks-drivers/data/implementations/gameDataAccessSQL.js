@@ -83,6 +83,7 @@ class GameDataAccessSQL {
     }
   }
 
+  // this is not used yet
   async deleteGameRecord(recordId) {
     try {
       const result = await pool.query(

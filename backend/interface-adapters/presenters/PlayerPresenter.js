@@ -4,6 +4,13 @@ class PlayerPresenter {
     this.viewModel = viewModel;
   }
 
+  presentPlayers(players) {
+    this.viewModel.setResponse({
+      status: 200,
+      body: players
+    });
+  }
+
   presentSuccess(outputData) {
     this.viewModel.setResponse({
       status: 200,

@@ -12,13 +12,16 @@ const PlayerCard = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   
   // Placeholder stats (to be replaced with real data)
-  const fatigueScores = [33, 28, 19, 14, 8];
-  const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
-  const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
-  
-  const fatigueScore = fatigueScores[index % fatigueScores.length];
-  const velocity = velocities[index % velocities.length];
-  const spinRate = spinRates[index % spinRates.length];
+  // const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
+  // const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
+  // calling items from the list based on index
+  // const velocity = velocities[index % velocities.length];
+  // const spinRate = spinRates[index % spinRates.length];
+
+  // Get fatigue score from database
+  const fatigueScore = player.fatigue_score || 0;
+  const velocity = player.velocity || 0;
+  const spinRate = player.spin_rate || 0;
   
   // Determine border color based on fatigue score
   let borderColor;

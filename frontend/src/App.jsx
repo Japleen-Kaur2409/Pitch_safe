@@ -89,6 +89,7 @@ function App() {
         return (
           <LoggedInUIView
             currentUser={authState.currentUser}
+            coachId={authState.currentUser?.coach_id}
             onLogout={handleLogout}
             authLoading={authState.isLoading}
           />

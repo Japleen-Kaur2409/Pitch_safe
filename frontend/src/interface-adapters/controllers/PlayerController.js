@@ -5,16 +5,23 @@ class PlayerController {
   constructor(
     getAllPlayersUseCase, 
     getPlayerDetailUseCase, 
-    fetchMLBPlayerIdUseCase
+    fetchMLBPlayerIdUseCase,
+    getPlayersByCoachUseCase
   ) {
     this.getAllPlayersUseCase = getAllPlayersUseCase;
     this.getPlayerDetailUseCase = getPlayerDetailUseCase;
     this.fetchMLBPlayerIdUseCase = fetchMLBPlayerIdUseCase;
+    this.getPlayersByCoachUseCase = getPlayersByCoachUseCase;
   }
 
   async handleGetAllPlayers() {
     console.log('PlayerController: Getting all players');
     await this.getAllPlayersUseCase.execute();
+  }
+
+  async handleGetPlayersByCoach(coachId) {
+    console.log('PlayerController: Getting players for coach', coachId);
+    await this.getPlayersByCoachUseCase.execute(coachId);
   }
 
   async handleGetPlayerDetail(playerId, playerData) {

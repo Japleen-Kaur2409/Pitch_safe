@@ -8,6 +8,7 @@ import LogoutUseCase from '../use-cases/auth/LogoutUseCase';
 import GetAllPlayersUseCase from '../use-cases/player/GetAllPlayersUseCase';
 import GetPlayerDetailUseCase from '../use-cases/player/GetPlayerDetailUseCase';
 import FetchMLBPlayerIdUseCase from '../use-cases/player/FetchMLBPlayerIdUseCase';
+import GetPlayersByCoachUseCase from '../use-cases/player/GetPlayersByCoachUseCase';
 
 // Game Use Cases
 import AddGameRecordUseCase from '../use-cases/game/AddGameRecordUseCase';
@@ -56,6 +57,7 @@ export function configureDependencies() {
   const getAllPlayersUseCase = new GetAllPlayersUseCase(playerService, playerPresenter);
   const getPlayerDetailUseCase = new GetPlayerDetailUseCase(playerService, mlbApiService, playerPresenter);
   const fetchMLBPlayerIdUseCase = new FetchMLBPlayerIdUseCase(mlbApiService, playerPresenter);
+  const getPlayersByCoachUseCase = new GetPlayersByCoachUseCase(playerService, playerPresenter);
   
   const addGameRecordUseCase = new AddGameRecordUseCase(gameRecordService, gamePresenter);
 
@@ -64,7 +66,8 @@ export function configureDependencies() {
   const playerController = new PlayerController(
     getAllPlayersUseCase, 
     getPlayerDetailUseCase, 
-    fetchMLBPlayerIdUseCase
+    fetchMLBPlayerIdUseCase,
+    getPlayersByCoachUseCase
   );
   const navigationController = new NavigationController(navigationViewModel);
   const gameController = new GameController(addGameRecordUseCase);
