@@ -8,7 +8,7 @@ const RosterView = ({
   error, 
   playerMLBIds,
   onPlayerClick,
-  getPlayerImage 
+  getPlayerImage
 }) => {
   if (loading) {
     return (

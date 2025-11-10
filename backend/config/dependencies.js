@@ -12,6 +12,7 @@ const DeleteGameRecordUseCase = require('../use-cases/game/DeleteGameRecordUseCa
 // Player Use Cases
 const GetAllPlayersUseCase = require('../use-cases/player/GetAllPlayersUseCase');
 const GetPlayerInfoUseCase = require('../use-cases/player/GetPlayerInfoUseCase');
+const GetPlayersByCoachUseCase = require('../use-cases/player/GetPlayersByCoachUseCase');
 
 // Auth Use Cases
 const LoginUseCase = require('../use-cases/auth/LoginUseCase');
@@ -53,6 +54,7 @@ function configureDependencies() {
   const deleteGameRecordUseCase = new DeleteGameRecordUseCase(gameDAO, gamePresenter);
   const getAllPlayersUseCase = new GetAllPlayersUseCase(playerDAO, playerPresenter);
   const getPlayerInfoUseCase = new GetPlayerInfoUseCase(playerDAO, playerPresenter);
+  const getPlayersByCoachUseCase = new GetPlayersByCoachUseCase(playerDAO, playerPresenter);
   const loginUseCase = new LoginUseCase(userDAO, authPresenter);
   const signupUseCase = new SignupUseCase(userDAO, authPresenter);
 
@@ -68,6 +70,7 @@ function configureDependencies() {
   const playerController = new PlayerController(
     getAllPlayersUseCase,
     getPlayerInfoUseCase,
+    getPlayersByCoachUseCase,
     playerViewModel
   );
   

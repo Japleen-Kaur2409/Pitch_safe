@@ -62,12 +62,20 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
       setGameState(newState);
     });
 
-    // Load players on mount
     // Load players on mount and fetch MLB IDs for all players
     const loadPlayersAndMLBData = async () => {
-      await playerController.handleGetAllPlayers();
+      const coachId = currentUser?.coach_id;
       
-      // After players are loaded, fetch MLB IDs for all of them
+      // Fetch players for this specific coach
+      if (coachId) {
+        await playerController.handleGetPlayersByCoach(coachId);
+      } else {
+        await playerController.handleGetAllPlayers();
+      }
+      
+      // Wait a bit for state to update, then get current players
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const currentPlayers = playerViewModel.getState().players;
       console.log('Preloading MLB data for', currentPlayers.length, 'players');
       
@@ -95,7 +103,7 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
       navUnsubscribe();
       gameUnsubscribe();
     };
-  }, [playerViewModel, navigationViewModel, gameViewModel, playerController]);
+  }, [playerViewModel, navigationViewModel, gameViewModel, playerController, currentUser?.coach_id]);
 
   const teamLogo = getTeamLogo(currentUser?.teamName || "Toronto Blue Jays");
 
@@ -217,6 +225,7 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
             playerMLBIds={playerState.playerMLBIds}
             onPlayerClick={handlePlayerClick}
             getPlayerImage={getPlayerImage}
+            currentCoachId={currentUser?.coach_id}
           />
         );
     }
