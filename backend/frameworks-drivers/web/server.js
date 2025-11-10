@@ -23,9 +23,10 @@ app.get('/', (req, res) => {
 app.post('/api/auth/login', (req, res) => authController.login(req, res));
 app.post('/api/auth/signup', (req, res) => authController.signup(req, res));
 
-// Player routes
-app.get('/api/players', (req, res) => playerController.getAllPlayers(req, res));
+// Player routes - IMPORTANT: Specific routes BEFORE generic routes
+app.get('/api/players/coach/:coachId', (req, res) => playerController.getPlayersByCoach(req, res));
 app.get('/api/players/:id/info', (req, res) => playerController.getPlayerInfo(req, res));
+app.get('/api/players', (req, res) => playerController.getAllPlayers(req, res));
 
 // Game routes
 app.post('/api/games', (req, res) => gameController.addGameRecord(req, res));
@@ -44,6 +45,7 @@ app.listen(PORT, () => {
   console.log('  POST /api/auth/login');
   console.log('  POST /api/auth/signup');
   console.log('  GET  /api/players');
+  console.log('  GET  /api/players/coach/:coachId');
   console.log('  GET  /api/players/:id/info');
   console.log('  POST /api/games');
   console.log('  GET  /api/games/player/:playerId');

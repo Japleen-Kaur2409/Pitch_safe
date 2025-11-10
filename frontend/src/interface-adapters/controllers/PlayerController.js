@@ -19,11 +19,13 @@ class PlayerController {
   constructor(
     getAllPlayersUseCase, 
     getPlayerDetailUseCase, 
-    fetchMLBPlayerIdUseCase
+    fetchMLBPlayerIdUseCase,
+    getPlayersByCoachUseCase
   ) {
     this.getAllPlayersUseCase = getAllPlayersUseCase;
     this.getPlayerDetailUseCase = getPlayerDetailUseCase;
     this.fetchMLBPlayerIdUseCase = fetchMLBPlayerIdUseCase;
+    this.getPlayersByCoachUseCase = getPlayersByCoachUseCase;
   }
 
   /**
@@ -47,6 +49,11 @@ class PlayerController {
    * @param {Object} playerData - Basic player data from roster
    * @returns {Promise<void>}
    */
+  async handleGetPlayersByCoach(coachId) {
+    console.log('PlayerController: Getting players for coach', coachId);
+    await this.getPlayersByCoachUseCase.execute(coachId);
+  }
+
   async handleGetPlayerDetail(playerId, playerData) {
     console.log('PlayerController: Getting player detail for', playerId);
     

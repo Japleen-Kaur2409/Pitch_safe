@@ -11,6 +11,16 @@ class PlayerService {
     return response;
   }
 
+  async getPlayersByCoach(coachId) {
+    try {
+      const response = await this.apiService.get(`/api/players/coach/${coachId}`);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching players for coach ${coachId}:`, error.message);
+      throw error;
+    }
+  }
+
   async getPlayerInfo(playerId) {
     try {
       const response = await this.apiService.get(`/api/players/${playerId}/info`);

@@ -177,24 +177,24 @@ const PlayerDetailView = ({
           <div>
             <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>B/T</div>
             <div style={{ fontSize: "16px", fontWeight: 700 }}>
-              {selectedPlayer.bats || 'R'}/{selectedPlayer.throws || 'R'}
+              {selectedPlayer.bats}/{selectedPlayer.throws}
             </div>
           </div>
           <div>
             <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>Height</div>
-            <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.height || '6\'3"'}</div>
+            <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.height}</div>
           </div>
           <div>
             <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>Weight</div>
-            <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.weight || '200'}lbs</div>
+            <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.weight}lbs</div>
           </div>
           <div>
             <div style={{ fontSize: "12px", opacity: 0.9, marginBottom: "4px" }}>Age</div>
             <div style={{ fontSize: "16px", fontWeight: 700 }}>
-              {selectedPlayer.age || 
-               (selectedPlayer.date_of_birth 
-                ? Math.floor((new Date() - new Date(selectedPlayer.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000)) 
-                : 'N/A')} yo
+              {Math.floor(
+                (new Date() - new Date(selectedPlayer.date_of_birth)) /
+                  (365.25 * 24 * 60 * 60 * 1000)
+              )}yo
             </div>
           </div>
         </div>
@@ -245,10 +245,11 @@ const PlayerDetailView = ({
           lineHeight: "1.6",
           textAlign: "center",
         }}>
-          {selectedPlayer.velocity === "-3%" && "5% decrease over the last 5 games compared to year average."}
-          {selectedPlayer.velocity === "-2%" && "2% decrease over the last 5 games compared to year average."}
-          {selectedPlayer.velocity === "+1%" && "1% increase over the last 5 games compared to year average."}
-          {!selectedPlayer.velocity && "No velocity data available."}
+         {selectedPlayer.velocity < 0
+          ? `${Math.abs(selectedPlayer.velocity)}% decrease over the last 5 games compared to year average.`
+          : selectedPlayer.velocity > 0
+          ? `${Math.abs(selectedPlayer.velocity)}% increase over the last 5 games compared to year average.`
+          : "No change in velocity over the last 5 games compared to year average."}
         </div>
       </div>
 
@@ -274,11 +275,11 @@ const PlayerDetailView = ({
           lineHeight: "1.6",
           textAlign: "center",
         }}>
-          {selectedPlayer.spinRate === "-0%" && "0% change over the last 5 games compared to year average."}
-          {selectedPlayer.spinRate === "-4%" && "4% decrease over the last 5 games compared to year average."}
-          {selectedPlayer.spinRate === "-2%" && "2% decrease over the last 5 games compared to year average."}
-          {selectedPlayer.spinRate === "-1%" && "1% decrease over the last 5 games compared to year average."}
-          {!selectedPlayer.spinRate && "No spin rate data available."}
+          {selectedPlayer.spin_rate < 0
+          ? `${Math.abs(selectedPlayer.spin_rate)}% decrease over the last 5 games compared to year average.`
+          : selectedPlayer.spin_rate > 0
+          ? `${Math.abs(selectedPlayer.spin_rate)}% increase over the last 5 games compared to year average.`
+          : "No change in velocity over the last 5 games compared to year average."}
         </div>
       </div>
 
