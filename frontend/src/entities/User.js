@@ -1,5 +1,22 @@
 // frontend/src/entities/User.js
+/**
+ * User Entity
+ * 
+ * Represents a coach/user in the system with their team association.
+ * Contains business rules for user validation and team information.
+ * 
+ * @class User
+ */
 class User {
+  /**
+   * Creates a new User instance
+   * 
+   * @param {Object} params - User parameters
+   * @param {number} params.user_id - Unique user identifier
+   * @param {string} params.email - User's email address
+   * @param {string} params.teamName - Associated MLB team name
+   * @param {Date} params.created_at - Account creation timestamp
+   */
   constructor({ user_id, email, teamName, created_at }) {
     this.user_id = user_id;
     this.email = email;
@@ -7,10 +24,20 @@ class User {
     this.created_at = created_at;
   }
 
+  /**
+   * Validates user data meets business requirements
+   * 
+   * @returns {boolean} True if user has valid email and team name
+   */
   isValid() {
     return this.email && this.teamName;
   }
 
+/**
+   * Gets the three-letter abbreviation for the user's team
+   * 
+   * @returns {string} Team abbreviation (e.g., 'TOR' for Toronto Blue Jays)
+   */
   getTeamAbbreviation() {
     const teamMap = {
       'Arizona Diamondbacks': 'ARI',

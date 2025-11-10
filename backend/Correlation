@@ -1,6 +1,7 @@
 # injury_corr_top20.py
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 PATH = "/Users/Abhinn/mlb_injury_data/statcast_pitcher_game_features_2024.xlsx"  
 WINDOW = 5
@@ -44,7 +45,7 @@ abs_order = corr.abs().sort_values(ascending=False)
 top20_idx = abs_order.head(20).index
 top20 = corr.loc[top20_idx]  # keep sign, sorted by abs value
 
-#gettig the otput 
+#getting the otput 
 out = (
     pd.DataFrame({
         "feature": top20.index,
@@ -61,9 +62,6 @@ print(out.to_string(index=False))
 # also save
 out.to_csv("injury_correlations_top20.csv", index=False)
 corr.rename("corr").to_csv("injury_correlations_all.csv")
-
-import pandas as pd
-import matplotlib.pyplot as plt
 
 # assuming your dataframe is named df_top20
 df_top20 = pd.read_csv("injury_correlations_top20.csv")

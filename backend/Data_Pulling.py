@@ -8,39 +8,66 @@ START, END = f"{SEASON}-03-01", f"{SEASON}-11-30"  # adjust if needed
 
 def split_name(fullname: str):
     # cuz pybaseball pitching_stats usually has 'Name' like "Last, First"
+    # Handle missing or null names
     if pd.isna(fullname):
         return None, None
     s = str(fullname).strip()
+    # Check for comma-separated format (Last, First)
     if "," in s:
         last, first = [x.strip() for x in s.split(",", 1)]
     else:
+        # Handle space-separated format (First Last)
         parts = s.split()
         if len(parts) == 1:
+            # Only one name provided, assume it's the last name
             return parts[0], ""
+        # First word is first name, remaining words are last name
         first, last = parts[0], " ".join(parts[1:])
     return last, first
 
 def get_pitcher_ids(season: int) -> list[int]:
+    """
+    Retrieve MLBAM IDs for all pitchers who appeared in the given season.
+    
+    This function uses two approaches to maximize coverage:
+    1. Look up by FanGraphs ID (if available in the data)
+    2. Look up by player name
+    
+    Args:
+        season: The MLB season year
+    
+    Returns:
+        list: Sorted list of unique MLBAM pitcher IDs
+    
+    Raises:
+        RuntimeError: If no pitcher IDs can be found
+    """
     ps = pitching_stats(season)  # FanGraphs season pitching table
     mlbam = set()
-
+    # Try to find the FanGraphs ID column (column names may vary)
     fg_col = None
     for c in ps.columns:
         if c.lower() in ("idfg", "playerid", "fg_id", "fangraphsid"):
             fg_col = c
             break
+
+    # If FanGraphs IDs are available, convert them to MLBAM IDs
     if fg_col is not None:
         fg_ids = ps[fg_col].dropna().astype(int).unique().tolist()
         if fg_ids:
+            # Use pybaseball's reverse lookup to convert FanGraphs IDs to MLBAM IDs
             idmap = playerid_reverse_lookup(fg_ids, key_type="fangraphs")
             if "key_mlbam" in idmap.columns:
                 mlbam.update(idmap["key_mlbam"].dropna().astype(int).tolist())
 
+    # Next, try to get MLBAM IDs by player names
     name_col = None
     for c in ("Name", "player_name", "Name-mlb", "Player"):
         if c in ps.columns:
             name_col = c
             break
+
+    # If names are available, look up each player individually
     if name_col is not None:
         seen = set()
         for nm in ps[name_col].dropna().unique().tolist():
@@ -61,17 +88,37 @@ def get_pitcher_ids(season: int) -> list[int]:
                 pass
 
     ids = sorted(mlbam)
+
+    # Ensure we found at least some pitcher IDs
     if not ids:
         raise RuntimeError("Could not assemble MLBAM pitcher IDs from pitching_stats().")
     return ids
 
 def pull_pitch_level(pid: int, retries: int = 3, start: str = START, end: str = END) -> pd.DataFrame:
+    """
+    Download pitch-by-pitch Statcast data for a specific pitcher.
+    
+    This function pulls granular pitch data including velocity, spin rate,
+    release point, and other biomechanical metrics.
+    
+    Args:
+        pid: The pitcher's MLBAM ID
+        retries: Number of retry attempts if download fails
+        start: Start date for data pull (YYYY-MM-DD format)
+        end: End date for data pull (YYYY-MM-DD format)
+    
+    Returns:
+        pd.DataFrame: Pitch-level data, or empty DataFrame if download fails
+    """
+    # Attempt to download data with retry logic
     for attempt in range(1, retries + 1):
         try:
             df = statcast_pitcher(start, end, pid)
             if df is not None and not df.empty:
                 if "pitch_type" not in df.columns:
                     return pd.DataFrame()
+                
+                # Filter out rows with missing pitch types
                 df = df[df["pitch_type"].notna()].copy()
                 if df.empty:
                     return pd.DataFrame()
@@ -89,6 +136,18 @@ def pull_pitch_level(pid: int, retries: int = 3, start: str = START, end: str = 
     return pd.DataFrame()
 
 def aggregate_game_features(p: pd.DataFrame) -> pd.DataFrame:
+    """
+    Aggregate pitch-by-pitch data into game-level features by pitch type.
+    
+    This creates a "wide" format where each pitch type gets its own set of columns.
+    For example: FF_release_speed_mean, SL_release_speed_mean, etc.
+    
+    Args:
+        p: DataFrame with pitch-level data
+    
+    Returns:
+        pd.DataFrame: Game-level aggregated features
+    """
     base_agg = {
         "release_speed": ["count", "mean", "std", "min", "max"],
         "release_spin_rate": ["mean", "std"],
@@ -99,6 +158,7 @@ def aggregate_game_features(p: pd.DataFrame) -> pd.DataFrame:
         "release_pos_z": ["mean", "std"],
         "extension": ["mean", "std"],
     }
+    # Filter aggregation dict to only include columns that exist in the data
     avail_agg = {k: v for k, v in base_agg.items() if k in p.columns}
     if not avail_agg:
         raise ValueError("No numeric pitch columns found to aggregate.")
@@ -118,6 +178,7 @@ def aggregate_game_features(p: pd.DataFrame) -> pd.DataFrame:
            )
     )
 
+    # Convert tuples like (release_speed, mean, FF) to FF_release_speed_mean
     newcols = []
     for col in wide.columns:
         if isinstance(col, tuple):
@@ -139,6 +200,7 @@ def aggregate_game_features(p: pd.DataFrame) -> pd.DataFrame:
     wide.columns = newcols
     wide = wide.reset_index()
 
+    # Get the first row for each pitcher/game combination (team info is constant)
     first_rows = (
         p.sort_values(["pitcher", "game_date"])
          .drop_duplicates(["pitcher", "game_date"])[["pitcher", "game_date", "home_team", "away_team"]]
@@ -147,19 +209,54 @@ def aggregate_game_features(p: pd.DataFrame) -> pd.DataFrame:
     return wide
 
 def add_last5_trends(wide: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add time-series features: lags, changes, and rolling statistics.
+    
+    For each numeric column, this creates:
+    - lag1: Value from the previous game
+    - chg1: Change from the previous game (current - previous)
+    - roll5_mean: 5-game rolling average
+    - roll5_std: 5-game rolling standard deviation
+    
+    Args:
+        wide: DataFrame with game-level features
+    
+    Returns:
+        pd.DataFrame: Original data with added time-series features
+    """
+    # Ensure data is sorted chronologically by pitcher
     wide = wide.sort_values(["pitcher","game_date"])
 
     def _per_pitcher(df):
+        """
+        Apply time-series transformations to a single pitcher's data.
+        This function is applied separately to each pitcher's game history.
+        """
         df = df.copy()
+        
+        # Get all numeric columns
         num_cols = df.select_dtypes(include=[np.number]).columns
+        
+        # LAG FEATURES: Previous game values (shift down by 1)
         lag = df[num_cols].shift(1).rename(columns=lambda c: f"{c}_lag1")
+        
+        # CHANGE FEATURES: Current value minus previous value
         chg = (df[num_cols] - lag.values).rename(columns=lambda c: f"{c}_chg1")
+        
+        # ROLLING MEAN: Average of last 5 games (min 2 games required)
         roll_mean = df[num_cols].rolling(5, min_periods=2).mean().rename(columns=lambda c: f"{c}_roll5_mean")
+        
+        # ROLLING STD: Standard deviation of last 5 games
         roll_std  = df[num_cols].rolling(5, min_periods=2).std().rename(columns=lambda c: f"{c}_roll5_std")
+        
+        # Combine original data with all new features
         return pd.concat([df, lag, chg, roll_mean, roll_std], axis=1)
 
+    # Apply transformations separately to each pitcher
     return wide.groupby("pitcher", group_keys=False).apply(_per_pitcher)
 
+
+# File to track which pitchers have been successfully processed
 CHK = f"checkpoint_{SEASON}.json"
 RAW_DIR = f"raw_pitch_{SEASON}"
 os.makedirs(RAW_DIR, exist_ok=True)
