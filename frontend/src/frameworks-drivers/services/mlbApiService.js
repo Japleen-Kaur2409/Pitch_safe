@@ -1,14 +1,39 @@
-// frontend/src/frameworks-drivers/services/mlbApiService.js
+/**
+ * MLB Stats API Service
+ * 
+ * External service adapter for querying the official MLB Stats API.
+ * Handles player lookups, detailed stats, and image URLs.
+ * 
+ * API Documentation: https://statsapi.mlb.com/docs/
+ * 
+ * @class MLBApiService
+ */
 class MLBApiService {
+  /**
+   * Creates a new MLBApiService instance
+   * 
+   * Initializes with the official MLB Stats API base URL.
+   */
   constructor() {
     this.baseURL = 'https://statsapi.mlb.com/api/v1';
   }
 
+  /**
+   * Searches for a player's MLB ID by name
+   * 
+   * Queries the MLB API people search endpoint and attempts to find
+   * an exact match. Falls back to the first result if no exact match.
+   * 
+   * @param {string} firstName - Player's first name
+   * @param {string} lastName - Player's last name
+   * @returns {Promise<number|null>} MLB player ID or null if not found
+   */
   async getPlayerId(firstName, lastName) {
     try {
       const searchQuery = `${firstName} ${lastName}`;
       console.log('Searching for player:', searchQuery);
       
+      // Query MLB API people search endpoint
       const response = await fetch(
         `${this.baseURL}/people/search?names=${encodeURIComponent(searchQuery)}`
       );
@@ -25,14 +50,15 @@ class MLBApiService {
         // Try to find exact match first
         const exactMatch = data.people.find(p => {
           const fullName = p.fullName?.toLowerCase() || '';
-          const firstName = p.firstName?.toLowerCase() || '';
-          const lastName = p.lastName?.toLowerCase() || '';
+          const fName = p.firstName?.toLowerCase() || '';
+          const lName = p.lastName?.toLowerCase() || '';
           const searchLower = searchQuery.toLowerCase();
           
           return fullName === searchLower || 
-                 `${firstName} ${lastName}` === searchLower;
+                 `${fName} ${lName}` === searchLower;
         });
         
+        // Use exact match or fall back to first result
         const playerId = exactMatch ? exactMatch.id : data.people[0].id;
         console.log('Found player ID:', playerId, 'for', searchQuery);
         return playerId;
@@ -46,7 +72,15 @@ class MLBApiService {
     }
   }
 
-  // Fetch detailed player information from MLB API
+  /**
+   * Fetches detailed player information from MLB API
+   * 
+   * Retrieves comprehensive player data including physical stats,
+   * team information, and career details.
+   * 
+   * @param {number} mlbPlayerId - MLB official player ID
+   * @returns {Promise<Object|null>} Player details object or null if error
+   */
   async getPlayerDetails(mlbPlayerId) {
     try {
       console.log('Fetching player details for MLB ID:', mlbPlayerId);
@@ -66,7 +100,7 @@ class MLBApiService {
       if (data.people && data.people.length > 0) {
         const player = data.people[0];
         
-        // Convert height from inches to feet'inches"
+        // Convert height from inches to feet'inches" format
         const heightInInches = player.height ? parseInt(player.height.replace(/[^\d]/g, '')) : null;
         let heightFormatted = null;
         if (heightInInches) {
@@ -82,11 +116,14 @@ class MLBApiService {
           const today = new Date();
           age = today.getFullYear() - birthDate.getFullYear();
           const monthDiff = today.getMonth() - birthDate.getMonth();
+          
+          // Adjust age if birthday hasn't occurred this year
           if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
             age--;
           }
         }
         
+        // Return formatted player details
         return {
           height: heightFormatted || player.height,
           weight: player.weight,
@@ -107,7 +144,21 @@ class MLBApiService {
     }
   }
 
-  // Try multiple image sources with fallbacks
+  /**
+   * Gets player image URLs with multiple fallback options
+   * 
+   * MLB provides images at different endpoints. This method returns
+   * multiple URLs to try in sequence for maximum reliability.
+   * 
+   * Image sources (in priority order):
+   * 1. Official MLB headshot (current season)
+   * 2. Silo headshot with generic fallback
+   * 3. Secure MLB headshot
+   * 4. Content delivery network thumbnail
+   * 
+   * @param {number} mlbPlayerId - MLB official player ID
+   * @returns {Object|null} Object with multiple image URL options
+   */
   getPlayerImage(mlbPlayerId) {
     if (!mlbPlayerId) {
       console.warn('No MLB player ID provided for image');
@@ -116,7 +167,7 @@ class MLBApiService {
     
     console.log('Getting image for MLB player ID:', mlbPlayerId);
     
-    // Try these URLs in order via the image component's onError
+    // Return multiple image URLs to try in order
     return {
       primary: `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${mlbPlayerId}/headshot/67/current`,
       fallback1: `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/r_max/w_180,q_auto:best/v1/people/${mlbPlayerId}/headshot/silo/current`,
