@@ -2,6 +2,7 @@
 const GameDataAccessSQL = require('../frameworks-drivers/data/implementations/gameDataAccessSQL');
 const PlayerDataAccessPG = require('../frameworks-drivers/data/implementations/playerDataAccessPG');
 const UserDataAccessSQL = require('../frameworks-drivers/data/implementations/userDataAccessSQL');
+const MLDataAccessHTTP = require('../frameworks-drivers/data/implementations/mlDataAccessHTTP');
 
 // Game Use Cases
 const AddGameRecordUseCase = require('../use-cases/game/AddGameRecordUseCase');
@@ -18,15 +19,20 @@ const GetPlayersByCoachUseCase = require('../use-cases/player/GetPlayersByCoachU
 const LoginUseCase = require('../use-cases/auth/LoginUseCase');
 const SignupUseCase = require('../use-cases/auth/SignupUseCase');
 
+// ML Use Case
+const GetInjuryRiskUseCase = require('../use-cases/ml/GetInjuryRiskUseCase');
+
 // Controllers
 const GameController = require('../interface-adapters/controllers/GameController');
 const PlayerController = require('../interface-adapters/controllers/PlayerController');
 const AuthController = require('../interface-adapters/controllers/AuthController');
+const MLController = require('../interface-adapters/controllers/MLController');
 
 // Presenters
 const GamePresenter = require('../interface-adapters/presenters/GamePresenter');
 const PlayerPresenter = require('../interface-adapters/presenters/PlayerPresenter');
 const AuthPresenter = require('../interface-adapters/presenters/AuthPresenter');
+const MLPresenter = require('../interface-adapters/presenters/MLPresenter');
 
 // View Models
 const HttpViewModel = require('../interface-adapters/view-models/HttpViewModel');
@@ -36,16 +42,19 @@ function configureDependencies() {
   const gameDAO = new GameDataAccessSQL();
   const playerDAO = new PlayerDataAccessPG();
   const userDAO = new UserDataAccessSQL();
+  const mlDAO = new MLDataAccessHTTP();
 
   // View Models
   const gameViewModel = new HttpViewModel();
   const playerViewModel = new HttpViewModel();
   const authViewModel = new HttpViewModel();
+  const mlViewModel = new HttpViewModel();
 
   // Presenters
   const gamePresenter = new GamePresenter(gameViewModel);
   const playerPresenter = new PlayerPresenter(playerViewModel);
   const authPresenter = new AuthPresenter(authViewModel);
+  const mlPresenter = new MLPresenter(mlViewModel);
 
   // Use Cases
   const addGameRecordUseCase = new AddGameRecordUseCase(gameDAO, gamePresenter);
@@ -57,6 +66,7 @@ function configureDependencies() {
   const getPlayersByCoachUseCase = new GetPlayersByCoachUseCase(playerDAO, playerPresenter);
   const loginUseCase = new LoginUseCase(userDAO, authPresenter);
   const signupUseCase = new SignupUseCase(userDAO, authPresenter);
+  const getInjuryRiskUseCase = new GetInjuryRiskUseCase(mlDAO, mlPresenter);
 
   // Controllers
   const gameController = new GameController(
@@ -80,10 +90,16 @@ function configureDependencies() {
     authViewModel
   );
 
+  const mlController = new MLController(
+    getInjuryRiskUseCase,
+    mlViewModel
+  );
+
   return {
     gameController,
     playerController,
-    authController
+    authController,
+    mlController
   };
 }
 
