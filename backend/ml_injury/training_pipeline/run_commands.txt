@@ -1,0 +1,43 @@
+
+To get the injury risks (this will be the code running on the website):
+python3 training_pipeline/flag_injury_risks.py \
+  --path final_dataset/final_dataset_clean.csv \
+  --top_k_ratio 0.10 \
+  --out_path outputs/injury_risk_predictions.csv
+
+
+python3 training_pipeline/visualize_inference.py \
+--path outputs/injury_risk_predictions.csv
+
+
+python3 training_pipeline/train_injury_precise.py \
+  --path final_dataset/final_dataset_clean.csv \
+  --feature_cap 300 \
+  --calibration isotonic \
+  --thr_mode target_rate \
+  --target_rate 0.10 \
+  --xgb_n_estimators 600 \
+  --xgb_learning_rate 0.05 \
+  --xgb_max_depth 3 \
+  --xgb_subsample 0.7 \
+  --xgb_colsample_bytree 0.5 \
+  --xgb_min_child_weight 8 \
+  --xgb_reg_lambda 5.0 \
+  --xgb_reg_alpha 1.0
+
+
+not always the same 
+python3 training_pipeline/train_injury_precise.py \
+  --path final_dataset/final_dataset_clean.csv \
+  --feature_cap 300 \
+  --calibration isotonic \
+  --thr_mode target_rate \
+  --target_rate 0.10 \
+  --xgb_n_estimators 600 \
+  --xgb_learning_rate 0.05 \
+  --xgb_max_depth 3 \
+  --xgb_subsample 0.7 \
+  --xgb_colsample_bytree 0.5 \
+  --xgb_min_child_weight 8 \
+  --xgb_reg_lambda 5.0 \
+  --xgb_reg_alpha 1.0

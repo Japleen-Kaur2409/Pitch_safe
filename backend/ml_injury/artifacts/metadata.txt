@@ -1,0 +1,12 @@
+{
+  "best_W": 7,
+  "windows_summary": {
+    "7": 0.5782336469181638
+  },
+  "test_cutoff_date": "2024-01-01",
+  "thr_mode": "target_rate",
+  "target_rate": 0.1,
+  "calibration": "sigmoid",
+  "days_h": 14,
+  "games_h": 3
+}
