@@ -11,7 +11,7 @@ const NavigationBar = ({ currentView, onNavigate }) => {
     <div style={{
       position: "fixed",
       bottom: "20px",
-      left: "50%",
+      left: "50.5%",
       transform: "translateX(-50%)",
       width: "calc(100% - 40px)",
       maxWidth: "420px",

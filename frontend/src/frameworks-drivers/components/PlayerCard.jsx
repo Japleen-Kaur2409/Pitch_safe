@@ -40,6 +40,36 @@ const PlayerCard = ({
     }
   }
 
+  // Get fatigue score from database
+  const fatigueScore = player.fatigue_score || 0;
+  
+  // Determine border color based on fatigue score
+  const getBackgroundGradient = () => {
+    if (fatigueScore >= 50) {
+      return "linear-gradient(135deg, rgba(231, 76, 60, 0.85) 0%, rgba(192, 57, 43, 0.85) 100%)";
+    } else if (fatigueScore >= 30) {
+      return "linear-gradient(135deg, rgba(243, 156, 18, 0.85) 0%, rgba(230, 126, 34, 0.85) 100%)";
+    } else if (fatigueScore >= 15) {
+      return "linear-gradient(135deg, rgba(241, 196, 15, 0.85) 0%, rgba(243, 156, 18, 0.85) 100%)";
+    } else {
+      return "linear-gradient(135deg, rgba(46, 204, 113, 0.85) 0%, rgba(39, 174, 96, 0.85) 100%)";
+    }
+  };
+  
+  const getFatigueLabel = () => {
+    if (fatigueScore >= 50) return "CRITICAL";
+    if (fatigueScore >= 30) return "HIGH";
+    if (fatigueScore >= 15) return "MODERATE";
+    return "GOOD";
+  };
+
+  const getFatigueLabelColor = () => {
+    if (fatigueScore >= 50) return "#e74c3c";
+    if (fatigueScore >= 30) return "#f39c12";
+    if (fatigueScore >= 15) return "#f1c40f";
+    return "#2ecc71";
+  };
+
   // Color for the risk score number
   const scoreColor = riskLevel === 'high' ? "#e74c3c" : 
                      riskLevel === 'medium' ? "#9b59b6" : 
@@ -86,32 +116,49 @@ const PlayerCard = ({
   const currentImageUrl = getCurrentImageUrl();
   
   return (
-    <div 
-      onClick={handleClick}
+    <div
+      onClick={() => onPlayerClick(player, index)}
       style={{
-        background: "rgba(255, 255, 255, 0.95)",
-        borderRadius: "16px",
+        background: getBackgroundGradient(),
+        borderRadius: "12px",
         padding: "16px",
         display: "flex",
         alignItems: "center",
-        gap: "15px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-        transition: "all 0.3s ease",
+        gap: "16px",
         cursor: "pointer",
-        border: `5px solid ${borderColor}`,
-        position: "relative",
+        transition: "all 0.2s ease",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
+        border: `2px solid ${
+          fatigueScore >= 50 ? 'rgba(231, 76, 60, 0.5)' :
+          fatigueScore >= 30 ? 'rgba(243, 156, 18, 0.5)' :
+          fatigueScore >= 15 ? 'rgba(241, 196, 15, 0.5)' :
+          'rgba(46, 204, 113, 0.5)'
+        }`,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
+        e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.35)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.25)";
       }}
     >
       {/* Player Photo */}
-      <div style={{ position: "relative", flexShrink: 0 }}>
+      <div style={{
+        width: "70px",
+        height: "70px",
+        borderRadius: "50%",
+        background: "rgba(255, 255, 255, 0.3)",
+        border: "3px solid rgba(255, 255, 255, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "36px",
+        overflow: "hidden",
+        flexShrink: 0,
+        position: "relative",
+      }}>
         {currentImageUrl && (
           <img
             key={`${mlbPlayerId}-${imageAttempt}`}
@@ -120,9 +167,8 @@ const PlayerCard = ({
             style={{
               width: "70px",
               height: "70px",
-              borderRadius: "12px",
+              borderRadius: "50%",
               objectFit: "cover",
-              backgroundColor: "#e9ecef",
               display: imageLoaded ? "block" : "none",
             }}
             onError={handleImageError}
@@ -133,43 +179,41 @@ const PlayerCard = ({
         <div style={{
           width: "70px",
           height: "70px",
-          borderRadius: "12px",
-          background: "linear-gradient(135deg, #e8d5d5 0%, #d5c8e8 100%)",
+          borderRadius: "50%",
           display: (!currentImageUrl || !imageLoaded) ? "flex" : "none",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "32px",
-          flexShrink: 0,
+          fontSize: "36px",
+          position: "absolute",
+          top: 0,
+          left: 0,
         }}>
           👤
         </div>
       </div>
 
       {/* Player Info */}
-      <div style={{ flex: 1, textAlign: "left" }}>
+      <div style={{ 
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+      }}>
         <div style={{
-          color: "#2c3e50",
-          fontSize: "15px",
+          fontSize: "18px",
           fontWeight: 700,
-          marginBottom: "8px",
+          color: "white",
+          textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
         }}>
           #{player.player_id} {player.first_name} {player.last_name}
         </div>
-        
         <div style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
           fontSize: "13px",
-          color: "#7f8c8d",
+          color: "rgba(255, 255, 255, 0.9)",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
         }}>
-          <div>
-            <span style={{ fontWeight: 600 }}>Velocity:</span> {velocity}
-          </div>
-          <div>
-            <span style={{ fontWeight: 600 }}>Spin Rate:</span> {spinRate}
-          </div>
-          
           {/* NEW: Risk Level Badge */}
           {riskData && (
             <div style={{
@@ -213,28 +257,56 @@ const PlayerCard = ({
       {/* Injury Risk Score */}
       <div style={{
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         flexDirection: "column",
-        marginRight: "8px",
+        alignItems: "flex-end",
+        gap: "8px",
+        flexShrink: 0,
       }}>
         <div style={{
-          fontSize: "28px",
+          fontSize: "32px",
           fontWeight: 700,
           color: scoreColor,
-          lineHeight: "1",
-          marginBottom: "4px",
+          textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+          lineHeight: 1,
         }}>
           {injuryRiskScore}%
         </div>
         <div style={{
-          fontSize: "11px",
-          color: "#95a5a6",
-          fontWeight: 600,
-          textAlign: "center",
+          fontSize: "12px",
+          color: "rgba(255, 255, 255, 0.9)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: "4px",
         }}>
-          Injury Risk
+          <span style={{
+            background: "rgba(0, 0, 0, 0.2)",
+            padding: "2px 8px",
+            borderRadius: "6px",
+            fontWeight: 600,
+          }}>
+            Fatigue: {fatigueScore.toFixed(1)}%
+          </span>
+          <span style={{
+            background: getFatigueLabelColor(),
+            color: "white",
+            padding: "2px 8px",
+            borderRadius: "6px",
+            fontWeight: 700,
+            fontSize: "11px",
+          }}>
+            {getFatigueLabel()}
+          </span>
         </div>
+      </div>
+
+      {/* Arrow */}
+      <div style={{
+        fontSize: "24px",
+        color: "rgba(255, 255, 255, 0.8)",
+        flexShrink: 0,
+      }}>
+        →
       </div>
     </div>
   );

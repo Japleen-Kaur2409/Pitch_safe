@@ -296,7 +296,7 @@ const LoggedInUIView = ({
 
       <div style={{
         width: "100%",
-        maxWidth: "420px",
+        maxWidth: "800px",
         paddingBottom: "100px",
       }}>
         {/* Header */}
