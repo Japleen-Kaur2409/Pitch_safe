@@ -237,14 +237,12 @@ padding: "2px 4px",
 
 {/* Player List */}
 <div style={{
-marginTop: "-180px",
-maxWidth: "420px",
-margin: "0 auto",
-width: "100%",
-display: "flex",
-flexDirection: "column",
-gap: "12px",
-marginBottom: "120px",
+  margin: "-180px auto 120px auto",  // top right bottom left
+  maxWidth: "420px",
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
 }}>
 {players
 .sort((a, b) => (b.fatigue_score || 0) - (a.fatigue_score || 0))
