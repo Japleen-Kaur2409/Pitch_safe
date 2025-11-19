@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 // Configure dependencies
-const { gameController, playerController, authController } = configureDependencies();
+const { gameController, playerController, authController, mlController } = configureDependencies();
 
 /* -----------------------------------
    ROUTES
@@ -34,6 +34,9 @@ app.get('/api/games/player/:playerId', (req, res) => gameController.getPlayerGam
 app.put('/api/games/:recordId', (req, res) => gameController.updateGameRecord(req, res));
 app.delete('/api/games/:recordId', (req, res) => gameController.deleteGameRecord(req, res));
 
+// ML route
+app.post('/api/ml/injury-risk', (req, res) => mlController.getInjuryRisk(req, res));
+
 /* -----------------------------------
    SERVER START
 ----------------------------------- */
@@ -51,4 +54,5 @@ app.listen(PORT, () => {
   console.log('  GET  /api/games/player/:playerId');
   console.log('  PUT  /api/games/:recordId');
   console.log('  DELETE /api/games/:recordId');
+  console.log('  POST /api/ml/injury-risk');
 });

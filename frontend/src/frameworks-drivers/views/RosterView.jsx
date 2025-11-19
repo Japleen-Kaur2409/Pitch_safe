@@ -8,7 +8,8 @@ const RosterView = ({
   error, 
   playerMLBIds,
   onPlayerClick,
-  getPlayerImage
+  getPlayerImage,
+  injuryRiskData  // ADD THIS
 }) => {
   if (loading) {
     return (
@@ -41,16 +42,23 @@ const RosterView = ({
       gap: "12px",
       marginBottom: "20px",
     }}>
-      {players.map((player, index) => (
-        <PlayerCard
-          key={player.player_id}
-          player={player}
-          index={index}
-          playerMLBIds={playerMLBIds}
-          onPlayerClick={onPlayerClick}
-          getPlayerImage={getPlayerImage}
-        />
-      ))}
+      {players.map((player, index) => {
+        // Calculate risk data for each player
+        const playerFullName = `${player.first_name}, ${player.last_name}`;
+        const riskData = injuryRiskData?.[playerFullName];
+        
+        return (
+          <PlayerCard
+            key={player.player_id}
+            player={player}
+            index={index}
+            playerMLBIds={playerMLBIds}
+            onPlayerClick={onPlayerClick}
+            getPlayerImage={getPlayerImage}
+            riskData={riskData}  // ADD THIS
+          />
+        );
+      })}
     </div>
   );
 };
