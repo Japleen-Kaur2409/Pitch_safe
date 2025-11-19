@@ -1,6 +1,9 @@
-# Pitch Safe - Pitcher Injury Prevention & Performance Analytics
+<p align="center">
+  <img src="assets/logo.png" alt="PitchSafe Logo" width="250"/>
+</p>
 
-**Empowering baseball pitchers and coaches with data-driven insights to prevent injuries and optimize performance.**
+<h1 align="center">Pitch Safe - Pitcher Injury Prevention & Performance Analytics</h1>
+<h3 align="center">Empowering baseball pitchers and coaches with data-driven insights to prevent injuries and optimize performance.</h3>
 
 ---
 
@@ -68,6 +71,7 @@ Pitch Safe provides:
 
 Download
 
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [Node.js](https://nodejs.org/) v18 or higher
 - [Git](https://git-scm.com/)
 - [PostgreSQL 14+](https://www.postgresql.org/) (for local testing)
@@ -84,7 +88,7 @@ git clone <your-repo-url>
 cd Pitch Safe
 ```
 
-### 2. Install Dependencies
+### 2. Install Dependencies (Non-Docker Only)
 
 ```bash
 # Backend
@@ -97,6 +101,7 @@ npm install
 ```
 
 ### 3. Configure Environment Variables
+NOTE: In the future, Docker will support both .env files or environment variables inside docker-compose.yml.
 
 #### Backend Production (`.env`)
 
@@ -133,6 +138,21 @@ DB_PORT=5432
 
 ### 4. Start the Application
 
+#### Option 1: Run with Docker (Recommended)
+Docker will start all services (frontend, backend, ML model API).
+```bash
+# Build images (only needed when code changes)
+docker compose up --build
+
+# Start the stack normally
+docker compose up
+```
+**Access the application:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5001
+- ML Python API: http://localhost:5002
+
+#### Option 2: Run with Docker (Recommended)
 ```bash
 # Terminal 1 - Start Backend
 cd backend/ml_injury/training_pipeline
@@ -150,7 +170,7 @@ npm run dev
 
 ---
 
-## Testing Setup
+## Testing Setup (Local Machine – Not Docker)
 
 Pitch Safe uses **Jest** to ensure code quality and prevent regressions.
 
