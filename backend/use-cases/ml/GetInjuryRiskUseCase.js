@@ -5,14 +5,36 @@ class GetInjuryRiskUseCase {
     this.outputBoundary = outputBoundary;
   }
 
+  /**
+   * Convert Mac path to Docker path
+   * /Users/pongpnag8848/Desktop/Pitch_safe/backend/... -> /app/backend/...
+   */
+  convertPathToDocker(csvPath) {
+    // If running in Docker, convert Mac paths to Docker paths
+    if (process.env.NODE_ENV === 'development' || process.env.DOCKER_PATH_CONVERSION === 'true') {
+      // Match pattern: /Users/.../Pitch_safe/backend/...
+      const match = csvPath.match(/Pitch_safe(\/backend\/.+)/);
+      if (match) {
+        const dockerPath = `/app${match[1]}`;
+        console.log(`Path conversion: ${csvPath} -> ${dockerPath}`);
+        return dockerPath;
+      }
+    }
+    return csvPath;
+  }
+
   async execute(inputData) {
     try {
-      const { csvPath, topKRatio, startDate } = inputData;
+      let { csvPath, topKRatio, startDate } = inputData;
 
       // Validate input
       if (!csvPath) {
         throw new Error('CSV path is required for injury risk prediction');
       }
+
+      // Convert Mac path to Docker path
+      csvPath = this.convertPathToDocker(csvPath);
+      console.log(`Using CSV path: ${csvPath}`);
 
       // Get predictions from ML service
       const predictions = await this.mlDataAccess.getInjuryRiskPredictions(

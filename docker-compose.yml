@@ -1,0 +1,44 @@
+services:
+  ml_api:
+    build: ./backend/ml_injury/training_pipeline
+    container_name: pitchsafe-ml
+    ports:
+      - "5002:5000"
+    volumes:
+      - ./backend:/app/backend
+      - ./backend/ml_injury/training_pipeline:/app
+    environment:
+      - FLASK_ENV=development
+
+  backend:
+    build: ./backend
+    container_name: pitchsafe-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - ML_API_URL=http://ml_api:5002
+      - ml_api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    container_name: pitchsafe-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5001
+    depends_on:
+      - backend

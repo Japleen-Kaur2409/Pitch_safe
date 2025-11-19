@@ -2,8 +2,9 @@
 const axios = require('axios');
 
 class MLDataAccessHTTP {
-  constructor(baseURL = 'http://localhost:5002') {
+  constructor(baseURL = process.env.ML_API_URL || 'http://ml_api:5002') {
     this.baseURL = baseURL;
+    console.log(`MLDataAccessHTTP initialized with baseURL: ${this.baseURL}`);
   }
 
   async getInjuryRiskPredictions(csvPath, topKRatio = 0.10, startDate = '2024-04-01') {
@@ -30,8 +31,9 @@ class MLDataAccessHTTP {
   async healthCheck() {
     try {
       const response = await axios.get(`${this.baseURL}/health`);
-      return response.data.status === 'healthy';
+      return response.data.status === 'ok';
     } catch (error) {
+      console.error(`ML Health check failed: ${error.message}`);
       return false;
     }
   }
