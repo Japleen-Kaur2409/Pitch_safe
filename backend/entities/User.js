@@ -1,6 +1,6 @@
 // backend/entities/User.js
 class User {
-  constructor({ coach_id, username, password, team_name, created_at }) {
+  constructor({ coach_id, username, password, team_name, created_at } = {}) {
     this.coach_id = coach_id;
     this.username = username;
     this.password = password;

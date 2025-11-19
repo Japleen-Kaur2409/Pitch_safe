@@ -1,91 +1,197 @@
-# SafePitch — Supabase Local Setup Guide
+# Pitch Safe - Pitcher Injury Prevention & Performance Analytics
 
-This guide explains how to set up and run the SafePitch project locally using **Supabase** and **Node.js**.
+**Empowering baseball pitchers and coaches with data-driven insights to prevent injuries and optimize performance.**
+
+---
+
+## Mission Statement
+
+Pitch Safe is a comprehensive web application designed to help baseball coaches and trainers monitor pitcher health, predict injury risks, and make data-informed decisions about player workload management. By combining real-time performance tracking with machine learning analysis, we aim to reduce pitcher injuries and extend athletic careers.
+
+---
+
+## Problem Statement
+
+Pitcher injuries, particularly to the elbow and shoulder, have reached epidemic proportions in baseball at all levels. Studies show:
+
+- **~25% of MLB pitchers** undergo Tommy John surgery during their careers
+- **Youth pitcher injuries** have increased by over 500% in the past 20 years
+- **Overuse and fatigue** are leading contributors to preventable injuries
+- **Traditional monitoring methods** are reactive rather than proactive
+
+### Current Challenges:
+
+1. **Lack of Real-Time Data** — Coaches track performance manually with spreadsheets and paper
+2. **No Early Warning System** — Injuries are noticed only after damage occurs
+3. **Inconsistent Monitoring** — No standardized way to track pitcher workload across teams
+4. **Limited Analysis Tools** — Difficulty identifying patterns and trends in performance data
+
+---
+
+## Our Solution
+
+Pitch Safe provides:
+
+**Injury Risk Prediction** — ML algorithms analyze patterns to flag potential injury risks  
+**Historical Analytics** — Visualize trends over time to make informed decisions  
+**Coach Dashboard** — Manage entire rosters with personalized player insights  
+**Data-Driven Alerts** — Get notified when players show concerning patterns
+
+---
+
+## Technology Stack
+
+### Backend
+
+- **Node.js & Express** — RESTful API server
+- **PostgreSQL** — Relational database (via Supabase)
+- **Clean Architecture** — Maintainable, testable, scalable code
+- **Jest** — Comprehensive testing framework (300+ tests)
+- **Python/scikit-learn** — Machine learning injury prediction models
+
+### Frontend
+
+- **React** — Modern, component-based UI
+- **Vite** — Fast development build tool
+- **Recharts** — Data visualization and analytics
+- **Clean Architecture** — Separation of concerns, dependency injection
+
+### Infrastructure
+
+- **Supabase** — Cloud PostgreSQL hosting
+- **GitHub Actions** — CI/CD pipeline
+- **Local PostgreSQL** — Isolated testing environment
 
 ---
 
 ## Prerequisites
 
-Make sure you have these installed:
+Download
 
-- [Node.js](https://nodejs.org/en/download/) (v18+ recommended)  
-- [Git](https://git-scm.com/downloads)
-- [Supabase Account](https://supabase.com) (access to the shared project)
+- [Node.js](https://nodejs.org/) v18 or higher
+- [Git](https://git-scm.com/)
+- [PostgreSQL 14+](https://www.postgresql.org/) (for local testing)
+- [Supabase Account](https://supabase.com) (credentials from team lead)
 
 ---
 
-## Installation Steps
+## Quick Start Guide
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <repo-link>
-cd <repo-folder>
+git clone <your-repo-url>
+cd Pitch Safe
 ```
-
-For example:
-```bash
-git clone https://github.com/your-org/safe-pitch.git
-cd safe-pitch
-```
-
----
 
 ### 2. Install Dependencies
 
-#### Backend
 ```bash
+# Backend
 cd backend
 npm install
-```
 
-#### Frontend
-```bash
+# Frontend
 cd ../frontend
 npm install
 ```
 
----
+### 3. Configure Environment Variables
 
-### 3. Environment Variables
+#### Backend Production (`.env`)
 
-Copy the `.env.sample` file and rename it to `.env` in both backend folder:
+Create `backend/.env`:
 
 ```bash
-cp .env.sample .env
+# Supabase Database (Production/Development)
+DB_USER=postgres
+DB_HOST=db.xxxxxxxxxxxxx.supabase.co
+DB_NAME=postgres
+DB_PASSWORD=your_supabase_password
+DB_PORT=5432
+
+# ML Dataset Path
+CSV_DATASET_PATH= # that is in the local. (here we are using yankees)
+
+# Server Configuration
+PORT=5001
+NODE_ENV=development
 ```
 
-Then fill in the values with the correct Supabase credentials (provided by the team lead or found in the Supabase Dashboard → Project Settings → API).
+#### Testing Environment (`.env.test`)
 
----
+Create `backend/.env.test`:
 
-### 4. Running the Project Locally
-
-#### Start the Backend Server
 ```bash
-cd backend
-npm run start
-```
-Server should start at:
-```
-http://localhost:5001
+# Local PostgreSQL (Testing Only)
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=pitchsafe_test_db
+DB_PASSWORD=
+DB_PORT=5432
 ```
 
-#### Start the Frontend
+### 4. Start the Application
+
 ```bash
-cd ../frontend
+# Terminal 1 - Start Backend
+cd backend/ml_injury/training_pipeline
+npm run dev
+
+# Terminal 2 - Start Frontend
+cd frontend
 npm run dev
 ```
-Then open the URL shown in your terminal (usually `http://localhost:5173`).
+
+**Access the application:**
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5001
 
 ---
 
+## Testing Setup
 
-## Troubleshooting
+Pitch Safe uses **Jest** to ensure code quality and prevent regressions.
 
-| Issue | Possible Fix |
-|-------|---------------|
-| `Supabase URL not found` | Ensure `.env` file has the correct `SUPABASE_URL` |
-| `Invalid API Key` | Check that you used the correct anon or service key |
-| `Port already in use` | Change port in `server.js` (e.g., to 5001) |
+### One-Time Setup
 
+#### Step 1: Install PostgreSQL
+
+**macOS:**
+
+```bash
+brew install postgresql@14
+brew services start postgresql@14
+echo 'export PATH="/usr/local/opt/postgresql@14/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### Step 2: Create PostgreSQL User
+
+```bash
+psql postgres
+CREATE ROLE postgres WITH LOGIN SUPERUSER CREATEDB CREATEROLE;
+\q
+```
+
+#### Step 3: Create Test Database
+
+```bash
+createdb -U postgres pitchsafe_test_db
+```
+
+#### Step 4: Initialize Test Data
+
+```bash
+cd backend
+npm run test:setup
+```
+
+#### Step 5: Run Tests
+
+```bash
+npm test
+```
+
+---
