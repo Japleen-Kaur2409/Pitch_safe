@@ -7,8 +7,8 @@ from feature_engineering import enrich_features
 from train_injury_precise import add_trend_features
 
 def load_model():
-    clf = joblib.load('artifacts/injury_xgb_final.joblib')
-    imputer, scaler, features = joblib.load('artifacts/injury_preprocessors.joblib')
+    clf = joblib.load('../artifacts/injury_xgb_final.joblib')
+    imputer, scaler, features = joblib.load('../artifacts/injury_preprocessors.joblib')
     return clf, imputer, scaler, features
 
 def predict_risk(df, clf, imputer, scaler, features, top_k_ratio=0.10):

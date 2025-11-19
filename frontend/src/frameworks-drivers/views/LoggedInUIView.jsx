@@ -13,8 +13,16 @@ import DownloadView from './DownloadView';
 import LogoutButton from '../components/LogoutButton';
 import NavigationBar from '../components/NavigationBar';
 
-const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
-  // Configure dependencies ONCE using useMemo
+const LoggedInUIView = ({ 
+  currentUser, 
+  onLogout, 
+  authLoading,
+  injuryRiskData,  // NEW: Receive injury risk data from App.jsx
+  mlLoading,       // NEW: ML loading state
+  mlError          // NEW: ML error state
+}) => {
+  console.log('🔵 LoggedInUIView received injuryRiskData:', injuryRiskData);
+  console.log('🔵 Keys:', injuryRiskData ? Object.keys(injuryRiskData) : 'undefined');
   const dependencies = useMemo(() => configureDependencies(), []);
   
   const { 
@@ -105,6 +113,16 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
     };
   }, [playerViewModel, navigationViewModel, gameViewModel, playerController, currentUser?.coach_id]);
 
+  // NEW: Log ML data when it arrives
+  useEffect(() => {
+    if (injuryRiskData) {
+      console.log('Injury risk data available:', injuryRiskData);
+    }
+    if (mlError) {
+      console.error('ML Error:', mlError);
+    }
+  }, [injuryRiskData, mlError]);
+
   const teamLogo = getTeamLogo(currentUser?.teamName || "Toronto Blue Jays");
 
   const getPlayerImage = (mlbPlayerId) => {
@@ -123,17 +141,36 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
   const handlePlayerClick = async (player, index) => {
     console.log('Player clicked:', player, index);
     
-    // Add placeholder stats (to be replaced with real data)
-    const fatigueScores = [33, 28, 19, 14, 8];
+    const playerFullName = `${player.first_name}, ${player.last_name}`;
+    const playerRiskData = injuryRiskData?.[playerFullName];
+    
+    console.log('🔍 Looking for player:', playerFullName);
+    console.log('🔍 Available players:', injuryRiskData ? Object.keys(injuryRiskData) : 'none');
+    console.log('🔍 Player risk data found:', playerRiskData);
+    
+    // Use ML-based risk score if available, otherwise use placeholder
+    const fatigueScore = playerRiskData 
+      ? Math.round(playerRiskData.injury_risk_prob * 100)
+      : [33, 28, 19, 14, 8][index % 5];
+    
+    const riskLevel = playerRiskData?.risk_level || 'unknown';
+    
+    console.log('🔍 Calculated fatigueScore:', fatigueScore);
+    console.log('🔍 Calculated riskLevel:', riskLevel);
+    
+    // Add placeholder velocity/spin rate (these come from your existing data)
     const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
     const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
 
     const playerWithStats = {
       ...player,
-      fatigueScore: fatigueScores[index % fatigueScores.length],
+      fatigueScore,
+      riskLevel,
       velocity: velocities[index % velocities.length],
       spinRate: spinRates[index % spinRates.length],
     };
+
+    console.log('🔍 Final playerWithStats:', playerWithStats);
 
     // Navigate to player detail immediately
     navigationController.navigateToPlayerDetail(playerWithStats);
@@ -192,6 +229,7 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
             getPlayerImage={getPlayerImage}
             gameState={gameState}
             gameController={gameController}
+            injuryRiskData={injuryRiskData}  // NEW: Pass injury risk data
           />
         );
 
@@ -226,6 +264,7 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
             onPlayerClick={handlePlayerClick}
             getPlayerImage={getPlayerImage}
             currentCoachId={currentUser?.coach_id}
+            injuryRiskData={injuryRiskData}
           />
         );
     }
@@ -289,6 +328,28 @@ const LoggedInUIView = ({ currentUser, onLogout, authLoading }) => {
           }}>
             {currentUser?.teamName || "Toronto Blue Jays"}
           </div>
+          
+          {/* NEW: ML Loading/Error Indicator */}
+          {mlLoading && (
+            <div style={{
+              color: "rgba(255, 255, 255, 0.8)",
+              fontSize: "12px",
+              marginTop: "8px",
+              fontStyle: "italic"
+            }}>
+              Loading injury risk predictions...
+            </div>
+          )}
+          {mlError && (
+            <div style={{
+              color: "rgba(255, 100, 100, 0.9)",
+              fontSize: "12px",
+              marginTop: "8px",
+              fontStyle: "italic"
+            }}>
+              Warning: ML predictions unavailable
+            </div>
+          )}
         </div>
 
         {/* Main Content */}

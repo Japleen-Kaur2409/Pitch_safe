@@ -6,32 +6,46 @@ const PlayerCard = ({
   index, 
   playerMLBIds, 
   onPlayerClick, 
-  getPlayerImage 
+  getPlayerImage,
+  riskData  // ADD THIS
 }) => {
   const [imageAttempt, setImageAttempt] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
   
-  // Placeholder stats (to be replaced with real data)
-  // const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
-  // const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
-  // calling items from the list based on index
-  // const velocity = velocities[index % velocities.length];
-  // const spinRate = spinRates[index % spinRates.length];
-
-  // Get fatigue score from database
-  const fatigueScore = player.fatigue_score || 0;
+  // Use ML risk data if available, otherwise use database fatigue_score, or fallback to 0
+  const injuryRiskScore = riskData 
+    ? Math.round(riskData.injury_risk_prob * 100)
+    : player.fatigue_score || 0;
+  
+  const riskLevel = riskData?.risk_level || 'unknown';
   const velocity = player.velocity || 0;
   const spinRate = player.spin_rate || 0;
   
-  // Determine border color based on fatigue score
+  // Determine border color based on risk level from ML model
   let borderColor;
-  if (fatigueScore > 20) {
-    borderColor = "rgba(231, 76, 60, 0.4)";
-  } else if (fatigueScore > 10) {
-    borderColor = "rgba(155, 89, 182, 0.4)";
+  if (riskLevel === 'high') {
+    borderColor = "rgba(231, 76, 60, 0.6)";  // Red for high risk
+  } else if (riskLevel === 'medium') {
+    borderColor = "rgba(155, 89, 182, 0.6)";  // Purple for medium risk
+  } else if (riskLevel === 'low') {
+    borderColor = "rgba(52, 152, 219, 0.6)";  // Blue for low risk
   } else {
-    borderColor = "rgba(52, 152, 219, 0.4)";
+    // Fallback to old logic if no ML data
+    if (injuryRiskScore > 20) {
+      borderColor = "rgba(231, 76, 60, 0.4)";
+    } else if (injuryRiskScore > 10) {
+      borderColor = "rgba(155, 89, 182, 0.4)";
+    } else {
+      borderColor = "rgba(52, 152, 219, 0.4)";
+    }
   }
+
+  // Color for the risk score number
+  const scoreColor = riskLevel === 'high' ? "#e74c3c" : 
+                     riskLevel === 'medium' ? "#9b59b6" : 
+                     riskLevel === 'low' ? "#3498db" : 
+                     injuryRiskScore > 20 ? "#e74c3c" : 
+                     injuryRiskScore > 10 ? "#9b59b6" : "#3498db";
 
   const handleClick = () => {
     console.log('PlayerCard clicked:', player, index);
@@ -41,7 +55,6 @@ const PlayerCard = ({
   const mlbPlayerId = playerMLBIds[player.player_id];
   const imageUrls = mlbPlayerId ? getPlayerImage(mlbPlayerId) : null;
   
-  // Get the current image URL to try
   const getCurrentImageUrl = () => {
     if (!imageUrls) return null;
     
@@ -116,7 +129,7 @@ const PlayerCard = ({
             onLoad={handleImageLoad}
           />
         )}
-        {/* Placeholder avatar - shown when no image or image loading */}
+        {/* Placeholder avatar */}
         <div style={{
           width: "70px",
           height: "70px",
@@ -156,12 +169,36 @@ const PlayerCard = ({
           <div>
             <span style={{ fontWeight: 600 }}>Spin Rate:</span> {spinRate}
           </div>
+          
+          {/* NEW: Risk Level Badge */}
+          {riskData && (
+            <div style={{
+              display: "inline-block",
+              padding: "2px 8px",
+              borderRadius: "8px",
+              fontSize: "11px",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              backgroundColor: riskLevel === 'high' ? 'rgba(231, 76, 60, 0.2)' : 
+                              riskLevel === 'medium' ? 'rgba(155, 89, 182, 0.2)' : 
+                              'rgba(52, 152, 219, 0.2)',
+              color: riskLevel === 'high' ? '#c0392b' : 
+                     riskLevel === 'medium' ? '#8e44ad' : 
+                     '#2980b9',
+              marginTop: "4px",
+              width: "fit-content",
+            }}>
+              {riskLevel} Risk
+            </div>
+          )}
+          
           <div 
             style={{
               color: "#3498db",
               fontWeight: 600,
               cursor: "pointer",
               textDecoration: "underline",
+              marginTop: "4px",
             }}
             onClick={(e) => {
               e.stopPropagation();
@@ -173,7 +210,7 @@ const PlayerCard = ({
         </div>
       </div>
 
-      {/* Fatigue Score */}
+      {/* Injury Risk Score */}
       <div style={{
         display: "flex",
         alignItems: "center",
@@ -184,11 +221,11 @@ const PlayerCard = ({
         <div style={{
           fontSize: "28px",
           fontWeight: 700,
-          color: fatigueScore > 20 ? "#e74c3c" : fatigueScore > 10 ? "#9b59b6" : "#3498db",
+          color: scoreColor,
           lineHeight: "1",
           marginBottom: "4px",
         }}>
-          {fatigueScore}
+          {injuryRiskScore}%
         </div>
         <div style={{
           fontSize: "11px",
@@ -196,7 +233,7 @@ const PlayerCard = ({
           fontWeight: 600,
           textAlign: "center",
         }}>
-          Fatigue Score
+          Injury Risk
         </div>
       </div>
     </div>

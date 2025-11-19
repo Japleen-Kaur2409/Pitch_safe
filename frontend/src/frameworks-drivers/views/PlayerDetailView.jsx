@@ -9,7 +9,8 @@ const PlayerDetailView = ({
   onBackClick,
   getPlayerImage,
   gameState,
-  gameController 
+  gameController,
+  injuryRiskData
 }) => {
   const [imageAttempt, setImageAttempt] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -29,6 +30,30 @@ const PlayerDetailView = ({
       </div>
     );
   }
+
+  const playerName = `${selectedPlayer.first_name}, ${selectedPlayer.last_name}`;
+  const riskData = injuryRiskData?.[playerName] || null;
+
+  console.log('=== PlayerDetailView DEBUG ===');
+  console.log('🔍 injuryRiskData:', injuryRiskData);
+  console.log('🔍 Available keys:', injuryRiskData ? Object.keys(injuryRiskData) : 'none');
+  console.log('🔍 Looking for playerName:', playerName);
+  console.log('🔍 riskData found:', riskData);
+  console.log('🔍 selectedPlayer:', selectedPlayer);
+  console.log('==============================');
+  
+  // Use injury_risk_prob if available, fallback to fatigueScore
+  const displayRiskScore = riskData 
+  ? Math.round(riskData.injury_risk_prob * 100) 
+  : selectedPlayer.fatigueScore || 0;
+  
+  const riskLevel = riskData?.risk_level || selectedPlayer.riskLevel || 'high';
+
+  console.log('=== DEBUG ===');
+  console.log('injuryRiskData:', injuryRiskData);
+  console.log('playerName:', playerName);
+  console.log('riskData:', riskData);
+  console.log('============');
 
   const mlbPlayerId = playerMLBIds[selectedPlayer.player_id];
   const imageUrls = mlbPlayerId ? getPlayerImage(mlbPlayerId) : null;
@@ -63,6 +88,17 @@ const PlayerDetailView = ({
 
   const currentImageUrl = getCurrentImageUrl();
 
+  // NEW: Function to get background gradient based on risk level
+  const getBackgroundGradient = () => {
+    if (riskLevel === 'high') {
+      return "linear-gradient(180deg, rgba(231, 76, 60, 0.85) 0%, rgba(192, 57, 43, 0.85) 100%)";
+    } else if (riskLevel === 'medium') {
+      return "linear-gradient(180deg, rgba(155, 89, 182, 0.85) 0%, rgba(142, 68, 173, 0.85) 100%)";
+    } else {
+      return "linear-gradient(180deg, rgba(52, 152, 219, 0.85) 0%, rgba(41, 128, 185, 0.85) 100%)";
+    }
+  };
+
   return (
     <>
       {/* Back Button */}
@@ -88,12 +124,7 @@ const PlayerDetailView = ({
 
       {/* Player Card with Photo and Name */}
       <div style={{
-        background: (() => {
-          const score = selectedPlayer.fatigueScore;
-          if (score > 20) return "linear-gradient(180deg, rgba(231, 76, 60, 0.85) 0%, rgba(192, 57, 43, 0.85) 100%)";
-          if (score > 10) return "linear-gradient(180deg, rgba(155, 89, 182, 0.85) 0%, rgba(142, 68, 173, 0.85) 100%)";
-          return "linear-gradient(180deg, rgba(52, 152, 219, 0.85) 0%, rgba(41, 128, 185, 0.85) 100%)";
-        })(),
+        background: getBackgroundGradient(),
         borderRadius: "16px",
         padding: "24px",
         marginBottom: "20px",
@@ -157,13 +188,29 @@ const PlayerDetailView = ({
           </div>
         </div>
 
-        {/* Fatigue Score */}
+        {/* Injury Risk Score */}
         <div style={{
           fontSize: "16px",
           fontWeight: 600,
+          marginBottom: "8px",
+        }}>
+          Injury Risk Score: {displayRiskScore}%
+        </div>
+        
+        {/* Risk Level Badge */}
+        <div style={{
+          display: "inline-block",
+          padding: "4px 12px",
+          borderRadius: "12px",
+          fontSize: "13px",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          backgroundColor: riskLevel === 'high' ? 'rgba(192, 57, 43, 0.9)' : 
+                          riskLevel === 'medium' ? 'rgba(142, 68, 173, 0.9)' : 
+                          'rgba(41, 128, 185, 0.9)',
           marginBottom: "24px",
         }}>
-          Fatigue Score: {selectedPlayer.fatigueScore}%
+          {riskLevel} Risk
         </div>
 
         {/* Stats Row */}
@@ -279,13 +326,15 @@ const PlayerDetailView = ({
           ? `${Math.abs(selectedPlayer.spin_rate)}% decrease over the last 5 games compared to year average.`
           : selectedPlayer.spin_rate > 0
           ? `${Math.abs(selectedPlayer.spin_rate)}% increase over the last 5 games compared to year average.`
-          : "No change in velocity over the last 5 games compared to year average."}
+          : "No change in spin rate over the last 5 games compared to year average."}
         </div>
       </div>
 
       {/* Warning Card */}
       <div style={{
-        background: "rgba(231, 76, 60, 0.75)",
+        background: riskLevel === 'high' ? "rgba(231, 76, 60, 0.75)" :
+                   riskLevel === 'medium' ? "rgba(155, 89, 182, 0.75)" :
+                   "rgba(52, 152, 219, 0.75)",
         borderRadius: "12px",
         padding: "20px",
         marginBottom: "20px",
@@ -297,18 +346,20 @@ const PlayerDetailView = ({
           marginBottom: "12px",
           textAlign: "center",
         }}>
-          WARNING
+          {riskLevel === 'high' ? 'HIGH RISK WARNING' : 
+           riskLevel === 'medium' ? 'MODERATE RISK' : 
+           'LOW RISK'}
         </div>
         <div style={{
           fontSize: "14px",
           lineHeight: "1.6",
           textAlign: "center",
         }}>
-          {selectedPlayer.fatigueScore > 20 
-            ? "This pitcher is presenting similar signs of fatigue that leads to Rotator Cuff."
-            : selectedPlayer.fatigueScore > 10
-            ? "This pitcher is showing moderate signs of fatigue. Monitor closely."
-            : "This pitcher is in good condition with minimal fatigue indicators."}
+          {riskLevel === 'high'
+            ? "This pitcher is presenting similar signs of fatigue that leads to Rotator Cuff injury. Immediate attention recommended."
+            : riskLevel === 'medium'
+            ? "This pitcher is showing moderate signs of fatigue. Monitor closely and consider rest."
+            : "This pitcher is in good condition with minimal injury risk indicators."}
         </div>
       </div>
 
