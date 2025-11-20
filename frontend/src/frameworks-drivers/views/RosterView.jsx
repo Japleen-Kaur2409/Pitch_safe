@@ -35,43 +35,73 @@ const RosterView = ({
     );
   }
 
-  // Helper function to calculate marker color based on fatigue
-  const getMarkerColor = (fatigueScore) => {
-    if (fatigueScore >= 75) return "#e74c3c"; // Critical - red
-    if (fatigueScore >= 50) return "#f39c12"; // Warning - orange
-    if (fatigueScore >= 25) return "#f1c40f"; // Caution - yellow
-    return "#2ecc71"; // Optimal - green
+  // Helper function to get injury risk score for a player
+  const getInjuryRisk = (player) => {
+    const playerFullName = `${player.first_name}, ${player.last_name}`;
+    const playerRiskData = injuryRiskData?.[playerFullName];
+    return playerRiskData ? Math.round(playerRiskData.injury_risk_prob * 100) : 0;
+  };
+
+  // Calculate min and max injury risk scores for the team
+  const injuryRiskScores = players.map(p => getInjuryRisk(p));
+  const minRisk = Math.min(...injuryRiskScores);
+  const maxRisk = Math.max(...injuryRiskScores);
+  const riskRange = maxRisk - minRisk || 1; // Avoid division by zero
+
+  // Helper function to calculate marker color based on injury risk
+  const getMarkerColor = (injuryRisk) => {
+    if (injuryRisk >= 8) return "#e74c3c"; // High risk - red
+    if (injuryRisk >= 4) return "#f1c40f"; // Medium risk - yellow
+    return "#2ecc71"; // Low risk - green
+  };
+
+  // Helper function to get position on spectrum (0-100%)
+  const getSpectrumPosition = (injuryRisk) => {
+    // Normalize the score to 0-100% based on team's min/max
+    const normalized = ((injuryRisk - minRisk) / riskRange) * 100;
+    // Invert so high risk is on the left
+    return 100 - normalized;
   };
 
   return (
     <div>
-      {/* ---- FATIGUE SPECTRUM SECTION ---- */}
+      {/* ---- INJURY RISK SPECTRUM SECTION ---- */}
       <div style={{ marginBottom: "24px", paddingTop: "10px" }}>
         <h2 style={{
           fontSize: "22px",
           fontWeight: 700,
+          marginTop: "-20px",
           marginBottom: "20px",
           textAlign: "center",
           color: "white",
           textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
         }}>
-          Fatigue Spectrum
+          Injury Risk Spectrum
         </h2>
 
         {/* Main container with extra height for player markers below */}
         <div style={{
           position: "relative",
-          height: "300px",
+          height: "400px",
           marginBottom: "20px",
           width: "100%",
+          maxWidth: "none",
+          margin: "0 auto 20px auto",
         }}>
-          {/* LEFT ARROW (High fatigue) */}
+          {/* LEFT ARROW (High risk) */}
           <div style={{
             position: "absolute",
-            left: "0",
-            top: "20px",
+            left: "-100px",
+            top: "15px",
+            width: "100px",
+            height: "100px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}>
-            <svg width="80" height="80" viewBox="0 0 100 100">
+            <svg width="100" height="100" viewBox="0 0 100 100" style={{
+              filter: "drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4))",
+            }}>
               <path d="M 80 20 L 20 50 L 80 80 Z" fill="#e74c3c" />
             </svg>
           </div>
@@ -80,61 +110,60 @@ const RosterView = ({
           <div style={{
             position: "absolute",
             top: "55px",
-            left: "90px",
-            right: "90px",
+            left: "-30px",
+            right: "-30px",
             height: "24px",
-            background: "linear-gradient(to right, #e74c3c 0%, #f39c12 30%, #f1c40f 50%, #2ecc71 100%)",
+            background: "linear-gradient(to right, #e74c3c 0%, #f1c40f 50%, #2ecc71 100%)",
             borderRadius: "12px",
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
           }}>
-            {/* Zone markers */}
-            <div style={{
-              position: "absolute",
-              left: "0%",
-              top: "-32px",
-              fontSize: "11px",
-              color: "white",
-              fontWeight: 700,
-              textShadow: "0 1px 3px rgba(0, 0, 0, 0.5)",
-              whiteSpace: "nowrap",
-            }}>
-              Critical (100%)
-            </div>
-            <div style={{
-              position: "absolute",
-              right: "0%",
-              top: "-32px",
-              fontSize: "11px",
-              color: "white",
-              fontWeight: 700,
-              textShadow: "0 1px 3px rgba(0, 0, 0, 0.5)",
-              whiteSpace: "nowrap",
-            }}>
-              Optimal (0%)
-            </div>
           </div>
 
-          {/* Right Arrow (Low/Good fatigue) */}
+          {/* Right Arrow (Low risk) */}
           <div style={{
             position: "absolute",
-            right: "0",
-            top: "20px",
+            right: "-100px",
+            top: "15px",
+            width: "100px",
+            height: "100px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}>
-            <svg width="80" height="80" viewBox="0 0 100 100">
+            <svg width="100" height="100" viewBox="0 0 100 100" style={{
+              filter: "drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4))",
+            }}>
               <path d="M 20 20 L 80 50 L 20 80 Z" fill="#2ecc71" />
             </svg>
           </div>
 
-          {/* ==== PLAYER MARKERS ON FATIGUE LINE ==== */}
-          {players.map((player) => {
-            const fatigueScore = player.fatigue_score || 0;
+          {/* ==== PLAYER MARKERS ON INJURY RISK LINE ==== */}
+          {players.map((player, playerIndex) => {
+            const injuryRisk = getInjuryRisk(player);
             const mlbId = playerMLBIds[player.player_id];
             const imageUrls = mlbId ? getPlayerImage(mlbId) : null;
-            const markerColor = getMarkerColor(fatigueScore);
+            const markerColor = getMarkerColor(injuryRisk);
 
-            // Position: inverted so high fatigue is on the left
-            // 100% fatigue = left (critical), 0% fatigue = right (optimal)
-            const leftPosition = `${100 - fatigueScore}%`;
+            // Position based on team's min/max range
+            const leftPosition = `${getSpectrumPosition(injuryRisk)}%`;
+
+            // Check how many players share this exact risk score and came before this one
+            const playersWithSameRisk = players.filter(p => getInjuryRisk(p) === injuryRisk);
+            const indexInGroup = playersWithSameRisk.findIndex(p => p.player_id === player.player_id);
+            const totalInGroup = playersWithSameRisk.length;
+            
+            // Calculate vertical offset for stacking
+            let verticalOffset = 0;
+            if (totalInGroup > 1) {
+              // Stack alternately above and below the line
+              if (indexInGroup % 2 === 0) {
+                // Even indices go above
+                verticalOffset = -75 * Math.floor(indexInGroup / 2);
+              } else {
+                // Odd indices go below
+                verticalOffset = 75 * Math.ceil(indexInGroup / 2);
+              }
+            }
 
             return (
               <div
@@ -142,7 +171,7 @@ const RosterView = ({
                 style={{
                   position: "absolute",
                   left: leftPosition,
-                  top: "30px",
+                  top: `${30 + verticalOffset}px`,
                   transform: "translateX(-50%)",
                   display: "flex",
                   flexDirection: "column",
@@ -159,13 +188,13 @@ const RosterView = ({
                   e.currentTarget.style.transform = "translateX(-50%) scale(1)";
                   e.currentTarget.style.zIndex = "10";
                 }}
-                title={`${player.first_name} ${player.last_name} - Fatigue: ${fatigueScore.toFixed(1)}%`}
+                title={`${player.first_name} ${player.last_name} - Injury Risk: ${injuryRisk.toFixed(1)}%`}
               >
                 {/* Player Image Marker */}
                 <div style={{
                   width: "56px",
                   height: "56px",
-                  background: "white",
+                  background: markerColor,
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
@@ -198,7 +227,7 @@ const RosterView = ({
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "26px",
-                    background: "linear-gradient(135deg, #e8d5d5 0%, #d5c8e8 100%)",
+                    background: markerColor,
                   }}>
                     👤
                   </div>
@@ -207,29 +236,14 @@ const RosterView = ({
                 {/* Player ID below marker */}
                 <div style={{
                   fontSize: "11px",
-                  marginTop: "6px",
+                  marginTop: "0px",
                   textAlign: "center",
                   fontWeight: 700,
                   color: "white",
                   textShadow: "0 1px 3px rgba(0, 0, 0, 0.8)",
                   whiteSpace: "nowrap",
                 }}>
-                  #{player.player_id}
-                </div>
-
-                {/* Fatigue score label */}
-                <div style={{
-                  fontSize: "10px",
-                  marginTop: "2px",
-                  textAlign: "center",
-                  fontWeight: 600,
-                  color: "white",
-                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.8)",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  borderRadius: "4px",
-                  padding: "2px 4px",
-                }}>
-                  {fatigueScore.toFixed(0)}%
+                  #{player.player_id} ({injuryRisk.toFixed(0)}%)
                 </div>
               </div>
             );
@@ -246,9 +260,10 @@ const RosterView = ({
         flexDirection: "column",
         gap: "12px",
         marginBottom: "120px",
+        marginTop: "-300px"
       }}>
         {players
-          .sort((a, b) => (b.fatigue_score || 0) - (a.fatigue_score || 0))
+          .sort((a, b) => getInjuryRisk(b) - getInjuryRisk(a))
           .map((player, index) => {
             // Get the ML risk data for this specific player
             const playerFullName = `${player.first_name}, ${player.last_name}`;

@@ -18,6 +18,19 @@ const PlayerDetailView = ({
   const [showMetricChart, setShowMetricChart] = useState(false);
   const [showGameForm, setShowGameForm] = useState(false);
 
+   // DEBUG LOGGING
+  console.log('=== PlayerDetailView DEBUG ===');
+  console.log('selectedPlayer:', selectedPlayer);
+  console.log('selectedPlayer keys:', selectedPlayer ? Object.keys(selectedPlayer) : 'none');
+  console.log('height:', selectedPlayer?.height);
+  console.log('weight:', selectedPlayer?.weight);
+  console.log('bats:', selectedPlayer?.bats);
+  console.log('throws:', selectedPlayer?.throws);
+  console.log('date_of_birth:', selectedPlayer?.date_of_birth);
+  console.log('fatigue_score:', selectedPlayer?.fatigue_score);
+  console.log('spin_rate:', selectedPlayer?.spin_rate);
+  console.log('==============================');
+
   if (loading) {
     return (
       <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
@@ -34,9 +47,9 @@ const PlayerDetailView = ({
     );
   }
 
-  const playerName = `${selectedPlayer.first_name}, ${selectedPlayer.last_name}`;
+  const playerName = `${selectedPlayer.last_name}, ${selectedPlayer.first_name}`;
   const riskData = injuryRiskData?.[playerName] || null;
-
+  
   console.log('=== PlayerDetailView DEBUG ===');
   console.log('🔍 injuryRiskData:', injuryRiskData);
   console.log('🔍 Available keys:', injuryRiskData ? Object.keys(injuryRiskData) : 'none');
@@ -45,12 +58,15 @@ const PlayerDetailView = ({
   console.log('🔍 selectedPlayer:', selectedPlayer);
   console.log('==============================');
   
+  
   // Use ML injury_risk_prob if available, fallback to database fatigue_score
   const displayRiskScore = riskData 
     ? Math.round(riskData.injury_risk_prob * 100) 
     : selectedPlayer.fatigue_score || 0;
   
-  const riskLevel = riskData?.risk_level || 'unknown';
+  
+  const riskLevel = riskData?.risk_level || selectedPlayer.riskLevel || 'high';
+
 
   const mlbPlayerId = playerMLBIds[selectedPlayer.player_id];
   const imageUrls = mlbPlayerId ? getPlayerImage(mlbPlayerId) : null;
@@ -87,11 +103,33 @@ const PlayerDetailView = ({
 
   // Calculate gauge rotation (0-180 degrees based on fatigue score)
   const calculateGaugeRotation = () => {
-    // 0% fatigue = -90deg (far left/green)
-    // 100% fatigue = 90deg (far right/red)
-    const rotation = -90 + (fatigueScore * 1.8);
-    return rotation;
-  };
+  if (!injuryRiskData) return -90; // fallback
+
+  const allRiskValues = Object.values(injuryRiskData)
+    .map(p => p.injury_risk_prob * 100)
+    .filter(v => !isNaN(v));
+
+  if (allRiskValues.length === 0) return -90;
+
+  const minRisk = Math.min(...allRiskValues);
+  const maxRisk = Math.max(...allRiskValues);
+
+  let playerRisk = displayRiskScore; // already percentage 0–100
+
+  // Avoid division error
+  if (maxRisk === minRisk) {
+    return 0; // center gauge since no variation
+  }
+
+  // Normalize 0 → 1
+  const normalized = (playerRisk - minRisk) / (maxRisk - minRisk);
+
+  // Convert [0,1] → [-90°, +90°]
+  const angle = -90 + normalized * 180;
+
+  return angle;
+};
+
 
   const getInjuryProbability = () => {
     // Use ML model probability if available
@@ -140,6 +178,50 @@ const PlayerDetailView = ({
     const value = e.target.value;
     setSelectedMetric(value);
     setShowMetricChart(value !== '');
+  };
+
+  // Helper function to safely format player data with better fallbacks
+  const formatHeight = () => {
+    if (selectedPlayer.height) return selectedPlayer.height;
+    return 'N/A';
+  };
+
+  const formatWeight = () => {
+    if (selectedPlayer.weight) return `${selectedPlayer.weight}lbs`;
+    return 'N/A';
+  };
+
+  const formatBats = () => {
+    return selectedPlayer.bats || 'N/A';
+  };
+
+  const formatThrows = () => {
+    return selectedPlayer.throws || 'N/A';
+  };
+
+  const formatAge = () => {
+    if (selectedPlayer.date_of_birth) {
+      try {
+        const age = Math.floor((new Date() - new Date(selectedPlayer.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000));
+        return age;
+      } catch (e) {
+        console.error('Error calculating age:', e);
+        return 'N/A';
+      }
+    }
+    return 'N/A';
+  };
+
+  const formatDOB = () => {
+    if (selectedPlayer.date_of_birth) {
+      try {
+        return new Date(selectedPlayer.date_of_birth).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch (e) {
+        console.error('Error formatting DOB:', e);
+        return 'N/A';
+      }
+    }
+    return 'N/A';
   };
 
   return (
@@ -282,41 +364,27 @@ const PlayerDetailView = ({
           }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>Height:</div>
-              <div style={{ fontSize: "16px", fontWeight: 700 }}>{selectedPlayer.height || 'No record'}</div>
+              <div style={{ fontSize: "16px", fontWeight: 700 }}>{formatHeight()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>Weight:</div>
-              <div style={{ fontSize: "16px", fontWeight: 700 }}>
-                {selectedPlayer.weight ? `${selectedPlayer.weight}lbs` : 'No record'}
-              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700 }}>{formatWeight()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>Bats:</div>
-              <div style={{ fontSize: "16px", fontWeight: 700 }}>
-                {selectedPlayer.bats || 'N/A'}
-              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700 }}>{formatBats()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>Throws:</div>
-              <div style={{ fontSize: "16px", fontWeight: 700 }}>
-                {selectedPlayer.throws || 'N/A'}
-              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700 }}>{formatThrows()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>Age:</div>
-              <div style={{ fontSize: "16px", fontWeight: 700 }}>
-                {selectedPlayer.date_of_birth ? 
-                  Math.floor((new Date() - new Date(selectedPlayer.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000))
-                  : 'NaN'}
-              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700 }}>{formatAge()}</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "4px" }}>DOB:</div>
-              <div style={{ fontSize: "16px", fontWeight: 700 }}>
-                {selectedPlayer.date_of_birth ? 
-                  new Date(selectedPlayer.date_of_birth).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : 'Invalid Date'}
-              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700 }}>{formatDOB()}</div>
             </div>
           </div>
         </div>
@@ -368,7 +436,7 @@ const PlayerDetailView = ({
             {/* Needle */}
             <div style={{
               position: "absolute",
-              bottom: "50px",
+              bottom: "60px",
               left: "50%",
               width: "4px",
               height: "90px",
@@ -410,7 +478,7 @@ const PlayerDetailView = ({
             {/* Percentage display */}
             <div style={{
               position: "absolute",
-              bottom: "15px",
+              bottom: "-10px",
               left: "50%",
               transform: "translateX(-50%)",
               fontSize: "48px",
@@ -487,37 +555,6 @@ const PlayerDetailView = ({
           textAlign: "center",
         }}>
           {getRecommendationText()}
-        </div>
-      </div>
-
-      {/* Splitter Release Height */}
-      <div style={{
-        background: "rgba(255, 255, 255, 0.15)",
-        borderRadius: "12px",
-        padding: "20px",
-        marginBottom: "16px",
-        color: "white",
-      }}>
-        <div style={{
-          fontSize: "18px",
-          fontWeight: 700,
-          marginBottom: "12px",
-          textAlign: "center",
-        }}>
-          Splitter Release Height
-        </div>
-        <div style={{
-          fontSize: "13px",
-          lineHeight: "1.6",
-          textAlign: "center",
-          opacity: 0.9,
-        }}>
-          {selectedPlayer.spin_rate < 0
-          ? `${Math.abs(selectedPlayer.spin_rate)}% decrease over the last 5 games compared to year average.`
-          : selectedPlayer.spin_rate > 0
-          ? `${Math.abs(selectedPlayer.spin_rate)}% increase over the last 5 games compared to year average.`
-          : "No change in spin rate over the last 5 games compared to year average."}
-          {" "}If his splitter release point starts dipping or moving more than usual on vertical height = fatigue for their delivery mechanics.
         </div>
       </div>
 

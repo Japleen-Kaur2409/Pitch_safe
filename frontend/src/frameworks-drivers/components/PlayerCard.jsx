@@ -21,61 +21,46 @@ const PlayerCard = ({
   const velocity = player.velocity || 0;
   const spinRate = player.spin_rate || 0;
   
-  // Determine border color based on risk level from ML model
-  let borderColor;
-  if (riskLevel === 'high') {
-    borderColor = "rgba(231, 76, 60, 0.6)";  // Red for high risk
-  } else if (riskLevel === 'medium') {
-    borderColor = "rgba(155, 89, 182, 0.6)";  // Purple for medium risk
-  } else if (riskLevel === 'low') {
-    borderColor = "rgba(52, 152, 219, 0.6)";  // Blue for low risk
-  } else {
-    // Fallback to old logic if no ML data
-    if (injuryRiskScore > 20) {
-      borderColor = "rgba(231, 76, 60, 0.4)";
-    } else if (injuryRiskScore > 10) {
-      borderColor = "rgba(155, 89, 182, 0.4)";
-    } else {
-      borderColor = "rgba(52, 152, 219, 0.4)";
-    }
-  }
-
-  // Get fatigue score from database
-  const fatigueScore = player.fatigue_score || 0;
-  
-  // Determine border color based on fatigue score
+  // Determine background gradient based on injury risk score
   const getBackgroundGradient = () => {
-    if (fatigueScore >= 50) {
+    if (injuryRiskScore >= 50 || riskLevel === 'high') {
       return "linear-gradient(135deg, rgba(231, 76, 60, 0.85) 0%, rgba(192, 57, 43, 0.85) 100%)";
-    } else if (fatigueScore >= 30) {
-      return "linear-gradient(135deg, rgba(243, 156, 18, 0.85) 0%, rgba(230, 126, 34, 0.85) 100%)";
-    } else if (fatigueScore >= 15) {
+    } else if (injuryRiskScore >= 30 || riskLevel === 'medium') {
       return "linear-gradient(135deg, rgba(241, 196, 15, 0.85) 0%, rgba(243, 156, 18, 0.85) 100%)";
     } else {
       return "linear-gradient(135deg, rgba(46, 204, 113, 0.85) 0%, rgba(39, 174, 96, 0.85) 100%)";
     }
   };
   
-  const getFatigueLabel = () => {
-    if (fatigueScore >= 50) return "CRITICAL";
-    if (fatigueScore >= 30) return "HIGH";
-    if (fatigueScore >= 15) return "MODERATE";
-    return "GOOD";
+  const getInjuryRiskLabel = () => {
+    if (injuryRiskScore >= 50 || riskLevel === 'high') return "HIGH RISK";
+    if (injuryRiskScore >= 30 || riskLevel === 'medium') return "MEDIUM RISK";
+    return "LOW RISK";
   };
 
-  const getFatigueLabelColor = () => {
-    if (fatigueScore >= 50) return "#e74c3c";
-    if (fatigueScore >= 30) return "#f39c12";
-    if (fatigueScore >= 15) return "#f1c40f";
+  const getInjuryRiskLabelColor = () => {
+    if (injuryRiskScore >= 50 || riskLevel === 'high') return "#e74c3c";
+    if (injuryRiskScore >= 30 || riskLevel === 'medium') return "#f39c12";
     return "#2ecc71";
   };
 
+  // Border color based on injury risk
+  const getBorderColor = () => {
+    if (injuryRiskScore >= 50 || riskLevel === 'high') {
+      return 'rgba(231, 76, 60, 0.5)';
+    } else if (injuryRiskScore >= 30 || riskLevel === 'medium') {
+      return 'rgba(241, 196, 15, 0.5)';
+    } else {
+      return 'rgba(46, 204, 113, 0.5)';
+    }
+  };
+
   // Color for the risk score number
-  const scoreColor = riskLevel === 'high' ? "#e74c3c" : 
-                     riskLevel === 'medium' ? "#9b59b6" : 
-                     riskLevel === 'low' ? "#3498db" : 
-                     injuryRiskScore > 20 ? "#e74c3c" : 
-                     injuryRiskScore > 10 ? "#9b59b6" : "#3498db";
+  const scoreColor = riskLevel === 'high' ? "#000000ff" : 
+                     riskLevel === 'medium' ? "#000000ff" : 
+                     riskLevel === 'low' ? "#000000ff" : 
+                     injuryRiskScore >= 50 ? "#e74c3c" : 
+                     injuryRiskScore >= 30 ? "#9b59b6" : "#000000ff";
 
   const handleClick = () => {
     console.log('PlayerCard clicked:', player, index);
@@ -128,12 +113,7 @@ const PlayerCard = ({
         cursor: "pointer",
         transition: "all 0.2s ease",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
-        border: `2px solid ${
-          fatigueScore >= 50 ? 'rgba(231, 76, 60, 0.5)' :
-          fatigueScore >= 30 ? 'rgba(243, 156, 18, 0.5)' :
-          fatigueScore >= 15 ? 'rgba(241, 196, 15, 0.5)' :
-          'rgba(46, 204, 113, 0.5)'
-        }`,
+        border: `2px solid ${getBorderColor()}`,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
@@ -198,12 +178,14 @@ const PlayerCard = ({
         display: "flex",
         flexDirection: "column",
         gap: "4px",
+        alignItems: "flex-start",
       }}>
         <div style={{
           fontSize: "18px",
           fontWeight: 700,
           color: "white",
           textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
+          textAlign: "left",
         }}>
           #{player.player_id} {player.first_name} {player.last_name}
         </div>
@@ -214,31 +196,9 @@ const PlayerCard = ({
           alignItems: "center",
           gap: "8px",
         }}>
-          {/* NEW: Risk Level Badge */}
-          {riskData && (
-            <div style={{
-              display: "inline-block",
-              padding: "2px 8px",
-              borderRadius: "8px",
-              fontSize: "11px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              backgroundColor: riskLevel === 'high' ? 'rgba(231, 76, 60, 0.2)' : 
-                              riskLevel === 'medium' ? 'rgba(155, 89, 182, 0.2)' : 
-                              'rgba(52, 152, 219, 0.2)',
-              color: riskLevel === 'high' ? '#c0392b' : 
-                     riskLevel === 'medium' ? '#8e44ad' : 
-                     '#2980b9',
-              marginTop: "4px",
-              width: "fit-content",
-            }}>
-              {riskLevel} Risk
-            </div>
-          )}
-          
           <div 
             style={{
-              color: "#3498db",
+              color: "#ffffffff",
               fontWeight: 600,
               cursor: "pointer",
               textDecoration: "underline",
@@ -266,7 +226,6 @@ const PlayerCard = ({
           fontSize: "32px",
           fontWeight: 700,
           color: scoreColor,
-          textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
           lineHeight: 1,
         }}>
           {injuryRiskScore}%
@@ -280,22 +239,14 @@ const PlayerCard = ({
           gap: "4px",
         }}>
           <span style={{
-            background: "rgba(0, 0, 0, 0.2)",
-            padding: "2px 8px",
-            borderRadius: "6px",
-            fontWeight: 600,
-          }}>
-            Fatigue: {fatigueScore.toFixed(1)}%
-          </span>
-          <span style={{
-            background: getFatigueLabelColor(),
+            background: getInjuryRiskLabelColor(),
             color: "white",
             padding: "2px 8px",
             borderRadius: "6px",
             fontWeight: 700,
             fontSize: "11px",
           }}>
-            {getFatigueLabel()}
+            {getInjuryRiskLabel()}
           </span>
         </div>
       </div>

@@ -8,7 +8,7 @@ const DownloadView = ({ players, selectedPlayer, onPlayerSelect }) => {
         color: "white", 
         fontSize: "28px", 
         fontWeight: 700,
-        marginBottom: "25px",
+        marginBottom: "10px",
         textAlign: "center",
         textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
       }}>
@@ -72,7 +72,7 @@ const DownloadView = ({ players, selectedPlayer, onPlayerSelect }) => {
         background: "rgba(255, 255, 255, 0.95)",
         borderRadius: "16px",
         padding: "24px",
-        marginBottom: "20px",
+        marginBottom: "120px",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
       }}>
         <h4 style={{
