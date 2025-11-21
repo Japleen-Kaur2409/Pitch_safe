@@ -11,29 +11,29 @@ const RosterView = ({
   getPlayerImage, // Function that fetches the player's MLB profile image
   injuryRiskData // ML risk predictions keyed by "FirstName, LastName"
 }) => {
-  if (loading) {
-    return (
-      <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
-        Loading players...
-      </div>
-    );
-  }
+if (loading) {
+return (
+<div style={{ color: "white", textAlign: "center", padding: "20px" }}>
+Loading players...
+</div>
+);
+}
 
-  if (error) {
-    return (
-      <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
-        Error loading players: {error}
-      </div>
-    );
-  }
+if (error) {
+return (
+<div style={{ color: "white", textAlign: "center", padding: "20px" }}>
+Error loading players: {error}
+</div>
+);
+}
 
-  if (players.length === 0) {
-    return (
-      <div style={{ color: "white", textAlign: "center", padding: "20px" }}>
-        No players found. Please add players to your roster.
-      </div>
-    );
-  }
+if (players.length === 0) {
+return (
+<div style={{ color: "white", textAlign: "center", padding: "20px" }}>
+No players found. Please add players to your roster.
+</div>
+);
+}
 
   // Helper function to get injury risk score for a player
   const getInjuryRisk = (player) => {
