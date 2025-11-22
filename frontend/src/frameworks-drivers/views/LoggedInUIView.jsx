@@ -17,9 +17,10 @@ const LoggedInUIView = ({
   currentUser, 
   onLogout, 
   authLoading,
-  injuryRiskData,  // NEW: Receive injury risk data from App.jsx
-  mlLoading,       // NEW: ML loading state
-  mlError          // NEW: ML error state
+  injuryRiskData,
+  mlLoading,
+  mlError,
+  onGameRecordSuccess
 }) => {
   console.log('🔵 LoggedInUIView received injuryRiskData:', injuryRiskData);
   console.log('🔵 Keys:', injuryRiskData ? Object.keys(injuryRiskData) : 'undefined');
@@ -231,7 +232,8 @@ const LoggedInUIView = ({
             getPlayerImage={getPlayerImage}
             gameState={gameState}
             gameController={gameController}
-            injuryRiskData={injuryRiskData}  // NEW: Pass injury risk data
+            injuryRiskData={injuryRiskData}
+            onGameRecordSuccess={onGameRecordSuccess}
           />
         );
 
@@ -240,7 +242,7 @@ const LoggedInUIView = ({
           <StatsView
             players={playerState.players}
             onPlayerClick={handlePlayerClick}
-            injuryRiskData={injuryRiskData}  // NEW: Pass injury risk data
+            injuryRiskData={injuryRiskData}
           />
         );
 

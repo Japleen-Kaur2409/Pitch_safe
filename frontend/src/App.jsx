@@ -25,6 +25,35 @@ function App() {
   const [authState, setAuthState] = useState(authViewModel.getState());
   const [mlState, setMlState] = useState(mlViewModel.getState());
 
+  // Listen for in-app ML updates (e.g., after adding a game)
+  useEffect(() => {
+    const handler = (e) => {
+      const newMap = e.detail;
+      try {
+        const prev = mlViewModel.getState().data?.playerRiskMap || {};
+        // Compute a simple diff object: { playerName: { before, after } }
+        const diffs = {};
+        Object.keys(newMap || {}).forEach(name => {
+          const before = prev[name]?.injury_risk_prob ?? null;
+          const after = newMap[name]?.injury_risk_prob ?? null;
+          if (before !== null && after !== null && before !== after) {
+            diffs[name] = { before, after };
+          } else if (before === null && after !== null) {
+            diffs[name] = { before: null, after };
+          }
+        });
+
+        mlViewModel.setSuccess({ playerRiskMap: newMap, message: 'Updated from add-game' });
+        // Attach diffs to window so views can pick up if needed
+        window.__mlLastDiffs = diffs;
+      } catch (err) {
+        console.error('Failed to apply ml:updated event', err);
+      }
+    };
+    window.addEventListener('ml:updated', handler);
+    return () => window.removeEventListener('ml:updated', handler);
+  }, [mlViewModel]);
+
   // Subscribe to auth state changes
   useEffect(() => {
     const unsubscribe = authViewModel.subscribe((newState) => {
@@ -36,12 +65,41 @@ function App() {
         console.log('✅ User authenticated, navigating to logged in view');
         setCurrentView('loggedIn');
         // IMPORTANT: Fetch ML data after successful login
-        fetchInjuryRiskData();
+        // Try to fetch ML data, with retries if the ML service isn't ready yet
+        (async () => {
+          const maxRetries = 3;
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              console.log(`📡 Fetching ML data (attempt ${attempt}/${maxRetries})`);
+              await fetchInjuryRiskData();
+              break;
+            } catch (err) {
+              console.warn('ML fetch attempt failed:', err.message);
+              if (attempt === maxRetries) {
+                console.error('All ML fetch attempts failed');
+              } else {
+                await new Promise(r => setTimeout(r, 1500 * attempt));
+              }
+            }
+          }
+        })();
       } else if (currentView === 'loggedIn') {
         console.log('🚪 User logged out, navigating to landing');
         setCurrentView('landing');
       }
     });
+
+    // If already authenticated at mount, fetch ML data immediately
+    const initial = authViewModel.getState();
+    if (initial.isAuthenticated) {
+      (async () => {
+        try {
+          await fetchInjuryRiskData();
+        } catch (e) {
+          console.warn('Initial ML fetch failed:', e.message);
+        }
+      })();
+    }
 
     return unsubscribe;
   }, [currentView]);
@@ -63,20 +121,12 @@ function App() {
     console.log('🔍 All env vars:', import.meta.env);
     console.log('🔍 VITE_CSV_PATH:', import.meta.env.VITE_CSV_PATH);
     try {
-      const csvPath = import.meta.env.VITE_CSV_PATH || 
-              '/yankees.csv';
-    } catch (error) {
-      console.error('❌LALALALALLALALALA:', error);
-    }
-    try {
-      const csvPath = import.meta.env.VITE_CSV_PATH || 
-              '/yankees.csv';
-      
+      const csvPath = import.meta.env.VITE_CSV_PATH || '/yankees.csv';
       console.log('📁 CSV Path:', csvPath);
       console.log('📊 Calling mlController.getInjuryRisk...');
-      
+
       await mlController.getInjuryRisk(csvPath, 0.10, '2024-04-01');
-      
+
       console.log('✅ ML Controller call completed');
       const currentState = mlViewModel.getState();
       console.log('📦 Full ML State:', currentState);
@@ -85,10 +135,27 @@ function App() {
         console.log('📊 First 3 players:', entries.slice(0, 3));
       }
       console.log('📦 Current mlState after fetch:', mlViewModel.getState());
-      
+      return currentState.data?.playerRiskMap;
+
     } catch (error) {
-      console.error('❌ Failed to load injury risk data:', error);
-      console.error('Error stack:', error.stack);
+      console.error('❌ Failed to load injury risk data:', error?.message || error);
+      throw error;
+    }
+  };
+
+  // Handle refresh after adding game record
+  const handleGameRecordSuccess = async () => {
+    console.log('🎮 Game record added, refreshing ML data...');
+    
+    // Wait 0.5 seconds before starting refresh
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    try {
+      // Re-fetch ML data
+      await fetchInjuryRiskData();
+      console.log('✅ ML data refreshed successfully');
+    } catch (error) {
+      console.error('❌ Failed to refresh ML data:', error);
     }
   };
 
@@ -162,6 +229,7 @@ function App() {
             injuryRiskData={mlState.data?.playerRiskMap}
             mlLoading={mlState.loading}
             mlError={mlState.error}
+            onGameRecordSuccess={handleGameRecordSuccess}
           />
         );
 

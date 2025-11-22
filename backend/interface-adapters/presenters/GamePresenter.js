@@ -8,19 +8,26 @@ class GamePresenter extends GameOutputBoundary {
   }
 
   presentSuccess(outputData) {
+    const body = {
+      message: outputData.message,
+      record: {
+        record_id: outputData.recordId,
+        player_id: outputData.playerId,
+        game_date: this.formatDate(outputData.gameDate),
+        pitch_type: outputData.pitchType,
+        release_speed: outputData.releaseSpeed,
+        spin_rate: outputData.spinRate
+      }
+    };
+
+    // include updated ML results if available
+    if (outputData.injuryRiskData) {
+      body.injuryRiskData = outputData.injuryRiskData;
+    }
+
     this.viewModel.setResponse({
       status: 201,
-      body: {
-        message: outputData.message,
-        record: {
-          record_id: outputData.recordId,
-          player_id: outputData.playerId,
-          game_date: this.formatDate(outputData.gameDate),
-          pitch_type: outputData.pitchType,
-          release_speed: outputData.releaseSpeed,
-          spin_rate: outputData.spinRate
-        }
-      }
+      body
     });
   }
 

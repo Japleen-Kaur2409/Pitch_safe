@@ -42,7 +42,15 @@ function configureDependencies() {
   const gameDAO = new GameDataAccessSQL();
   const playerDAO = new PlayerDataAccessPG();
   const userDAO = new UserDataAccessSQL();
-  const mlDAO = new MLDataAccessHTTP();
+  const mlDAO = new MLDataAccessHTTP(process.env.ML_API_URL || 'http://localhost:5002');
+
+  // CSV updater: used to append new game rows and trigger ML inference
+  const MLCsvUpdater = require('../frameworks-drivers/data/implementations/mlCsvUpdater');
+  const mlCsvUpdater = new MLCsvUpdater({
+    localCsvPath: process.env.LOCAL_ML_CSV_PATH || require('path').resolve(__dirname, '../ml_injury/final_dataset/yankees.csv'),
+    mlCsvPath: process.env.ML_CSV_PATH_FOR_ML || '/app/final_dataset/yankees.csv',
+    mlApiUrl: process.env.ML_API_URL || 'http://localhost:5002'
+  });
 
   // View Models
   const gameViewModel = new HttpViewModel();
@@ -57,7 +65,7 @@ function configureDependencies() {
   const mlPresenter = new MLPresenter(mlViewModel);
 
   // Use Cases
-  const addGameRecordUseCase = new AddGameRecordUseCase(gameDAO, gamePresenter);
+  const addGameRecordUseCase = new AddGameRecordUseCase(gameDAO, gamePresenter, mlCsvUpdater, playerDAO);
   const getPlayerGamesUseCase = new GetPlayerGamesUseCase(gameDAO, gamePresenter);
   const updateGameRecordUseCase = new UpdateGameRecordUseCase(gameDAO, gamePresenter);
   const deleteGameRecordUseCase = new DeleteGameRecordUseCase(gameDAO, gamePresenter);
