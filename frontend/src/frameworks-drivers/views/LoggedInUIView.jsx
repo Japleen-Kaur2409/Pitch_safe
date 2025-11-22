@@ -23,6 +23,8 @@ const LoggedInUIView = ({
 }) => {
   console.log('🔵 LoggedInUIView received injuryRiskData:', injuryRiskData);
   console.log('🔵 Keys:', injuryRiskData ? Object.keys(injuryRiskData) : 'undefined');
+  console.log('🔵 mlLoading:', mlLoading);
+  console.log('🔵 mlError:', mlError);
   const dependencies = useMemo(() => configureDependencies(), []);
   
   const { 
@@ -158,16 +160,16 @@ const LoggedInUIView = ({
     console.log('🔍 Calculated fatigueScore:', fatigueScore);
     console.log('🔍 Calculated riskLevel:', riskLevel);
     
-    // Add placeholder velocity/spin rate (these come from your existing data)
-    const velocities = ["-3%", "-2%", "-2%", "+1%", "+1%"];
-    const spinRates = ["-0%", "-0%", "-4%", "-2%", "-1%"];
+    // Define placeholder arrays for velocity and spin rate
+    const velocities = [92.5, 94.2, 90.8, 95.1, 91.3];
+    const spinRates = [2350, 2420, 2280, 2510, 2390];
 
     const playerWithStats = {
       ...player,
-      fatigueScore,
+      fatigue_score: fatigueScore,  // Use fatigue_score to match what PlayerDetailView expects
       riskLevel,
       velocity: velocities[index % velocities.length],
-      spinRate: spinRates[index % spinRates.length],
+      spin_rate: spinRates[index % spinRates.length],
     };
 
     console.log('🔍 Final playerWithStats:', playerWithStats);
@@ -238,6 +240,7 @@ const LoggedInUIView = ({
           <StatsView
             players={playerState.players}
             onPlayerClick={handlePlayerClick}
+            injuryRiskData={injuryRiskData}  // NEW: Pass injury risk data
           />
         );
 
@@ -296,7 +299,7 @@ const LoggedInUIView = ({
 
       <div style={{
         width: "100%",
-        maxWidth: "420px",
+        maxWidth: "800px",
         paddingBottom: "100px",
       }}>
         {/* Header */}
