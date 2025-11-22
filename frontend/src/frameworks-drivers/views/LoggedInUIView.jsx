@@ -115,7 +115,7 @@ const LoggedInUIView = ({
     };
   }, [playerViewModel, navigationViewModel, gameViewModel, playerController, currentUser?.coach_id]);
 
-  // NEW: Log ML data when it arrives
+  // Log ML data when it arrives
   useEffect(() => {
     if (injuryRiskData) {
       console.log('Injury risk data available:', injuryRiskData);
@@ -253,6 +253,8 @@ const LoggedInUIView = ({
               console.log('Player selected for download:', player);
               playerViewModel.update({ selectedPlayer: player });
             }}
+            injuryRiskData={injuryRiskData}
+            gameState={gameState}
           />
         );
 
