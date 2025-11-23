@@ -188,7 +188,7 @@ No players found. Please add players to your roster.
                   e.currentTarget.style.transform = "translateX(-50%) scale(1)";
                   e.currentTarget.style.zIndex = "10";
                 }}
-                title={`${player.first_name} ${player.last_name} - Injury Risk: ${injuryRisk.toFixed(1)}%`}
+                title={`${player.last_name} ${player.last_name} - Injury Risk: ${injuryRisk.toFixed(1)}%`}
               >
                 {/* Player Image Marker */}
                 <div style={{
@@ -206,7 +206,7 @@ No players found. Please add players to your roster.
                   {imageUrls?.primary ? (
                     <img
                       src={imageUrls.primary}
-                      alt={`${player.first_name} ${player.last_name}`}
+                      alt={`${player._name} ${player.last_name}`}
                       style={{
                         width: "56px",
                         height: "56px",
