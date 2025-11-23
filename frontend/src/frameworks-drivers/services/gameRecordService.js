@@ -7,6 +7,17 @@ class GameRecordService {
   async addGameRecord(gameRecordData) {
     try {
       const response = await this.apiService.post('/api/games', gameRecordData);
+      // If backend returned updated ML results, broadcast to the app
+      try {
+        // Support both shapes: the apiService returns parsed JSON (response)
+        // or some callers may wrap it under `body` (response.body). Prefer direct `response.injuryRiskData`.
+        const injuryData = (response && response.injuryRiskData) || (response && response.body && response.body.injuryRiskData) || null;
+        if (injuryData) {
+          window.dispatchEvent(new CustomEvent('ml:updated', { detail: injuryData }));
+        }
+      } catch (e) {
+        console.warn('Failed to dispatch ml:updated event', e);
+      }
       return response;
     } catch (error) {
       console.error('Error adding game record:', error);

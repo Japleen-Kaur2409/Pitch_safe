@@ -42,7 +42,10 @@ import { mlbApiService } from '../frameworks-drivers/services/mlbApiService';
 import { gameRecordService } from '../frameworks-drivers/services/gameRecordService';
 
 // Configure all dependencies
+let _cachedDependencies = null;
+
 export function configureDependencies() {
+  if (_cachedDependencies) return _cachedDependencies;
   // View Models
   const authViewModel = new AuthViewModel();
   const playerViewModel = new PlayerViewModel();
@@ -55,8 +58,8 @@ export function configureDependencies() {
   // Presenters
   const authPresenter = new AuthPresenter(authViewModel);
   const playerPresenter = new PlayerPresenter(playerViewModel);
-  const gamePresenter = new GamePresenter(gameViewModel);
   const mlPresenter = new MLPresenter(mlViewModel);
+  const gamePresenter = new GamePresenter(gameViewModel, mlPresenter);
 
   // Use Cases
   const loginUseCase = new LoginUseCase(authService, authPresenter);
@@ -101,4 +104,10 @@ export function configureDependencies() {
     // Services (for direct access if needed)
     mlbApiService
   };
+}
+
+// Cache the dependencies so multiple calls return the same instances
+_cachedDependencies = configureDependencies();
+export function getDependencies() {
+  return _cachedDependencies;
 }

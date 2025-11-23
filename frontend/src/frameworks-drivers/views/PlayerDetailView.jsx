@@ -10,7 +10,8 @@ const PlayerDetailView = ({
   getPlayerImage,
   gameState,
   gameController,
-  injuryRiskData
+  injuryRiskData,
+  onGameRecordSuccess
 }) => {
   const [imageAttempt, setImageAttempt] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -63,6 +64,23 @@ const PlayerDetailView = ({
   const displayRiskScore = riskData 
     ? Math.round(riskData.injury_risk_prob * 100) 
     : selectedPlayer.fatigue_score || 0;
+
+  const handleGameRecordAdded = async () => {
+    console.log('🎮 Game record added successfully');
+    
+    // Close the form immediately
+    setShowGameForm(false);
+    
+    // Call the refresh function if provided
+    if (onGameRecordSuccess) {
+      await onGameRecordSuccess();
+    }
+    
+    // Navigate back to roster after a brief delay
+    setTimeout(() => {
+      onBackClick();
+    }, 500);
+  };
   
   
   const riskLevel = riskData?.risk_level || selectedPlayer.riskLevel || 'high';
@@ -734,10 +752,7 @@ const PlayerDetailView = ({
           }}>
             <GameRecordForm 
               playerId={selectedPlayer.player_id} 
-              onSuccess={() => {
-                console.log('Game record added successfully');
-                setShowGameForm(false); // Close form after successful submission
-              }}
+              onSuccess={handleGameRecordAdded}
               gameState={gameState}
               gameController={gameController}
             />
