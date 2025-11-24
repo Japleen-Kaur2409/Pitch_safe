@@ -50,7 +50,7 @@ const NavigationBar = ({ currentView, onNavigate }) => {
         }}
       >
         <span>📊</span>
-        <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.9)" }}>Stats</span>
+        <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.9)" }}>Injury</span>
       </div>
 
       <div
