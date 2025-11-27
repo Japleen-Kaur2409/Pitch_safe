@@ -48,7 +48,7 @@ const PlayerDetailView = ({
     );
   }
 
-  const playerName = `${selectedPlayer.last_name}, ${selectedPlayer.first_name}`;
+  const playerName = `${selectedPlayer.first_name}, ${selectedPlayer.last_name}`;
   const riskData = injuryRiskData?.[playerName] || null;
   
   console.log('=== PlayerDetailView DEBUG ===');
@@ -342,7 +342,7 @@ const PlayerDetailView = ({
             marginBottom: "20px",
             textAlign: "center",
           }}>
-            {selectedPlayer.first_name} {selectedPlayer.last_name}
+            {playerName}
           </div>
 
           {/* Injury Risk Score */}
@@ -601,8 +601,8 @@ const PlayerDetailView = ({
           If his curveball stops snapping down the same way = red flag.
         </div>
       </div>
-
-      {/* Visual Representations of Metrics - WITH DROPDOWN */}
+ 
+      {/* Visual Representations of Metrics - WITH DROPDOWN 
       <div style={{
         background: "rgba(255, 255, 255, 0.15)",
         borderRadius: "12px",
@@ -622,7 +622,7 @@ const PlayerDetailView = ({
            'Visual Representations of Metrics'}
         </div>
         
-        {/* Risk description */}
+        {/* Risk description 
         <div style={{
           fontSize: "14px",
           marginBottom: "16px",
@@ -638,7 +638,7 @@ const PlayerDetailView = ({
             : "Select a metric below to visualize performance trends."}
         </div>
         
-        {/* Dropdown */}
+        {/* Dropdown 
         <div style={{
           marginBottom: "16px",
         }}>
@@ -667,7 +667,7 @@ const PlayerDetailView = ({
           </select>
         </div>
 
-        {/* Placeholder Chart */}
+        {/* Placeholder Chart 
         {showMetricChart && (
           <div style={{
             width: "100%",
