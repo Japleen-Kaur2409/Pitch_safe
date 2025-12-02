@@ -187,7 +187,7 @@ const PlayerCard = ({
           textShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
           textAlign: "left",
         }}>
-          #{player.player_id} {player.first_name} {player.last_name}
+          #{player.player_id} {player.last_name} {player.first_name}
         </div>
         <div style={{
           fontSize: "13px",
