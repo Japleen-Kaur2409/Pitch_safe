@@ -5,6 +5,10 @@
 <h1 align="center">Pitch Safe - Pitcher Injury Prevention & Performance Analytics</h1>
 <h3 align="center">Empowering baseball pitchers and coaches with data-driven insights to prevent injuries and optimize performance.</h3>
 
+<p align="center">
+  <img src="assets/title.png" alt="Titile of PitchSafe" />
+</p>
+
 ---
 
 ## Mission Statement
@@ -43,6 +47,10 @@ Pitch Safe provides:
 ---
 
 ## Technology Stack
+
+## Brief Code Architecture
+
+PitchSafe follows a Clean Architecture–based repository structure that separates concerns across independent layers for scalability, maintainability, and testability. The project is divided into a frontend and backend, both organized by layers rather than pages or components, with a shared src/ directory for common resources. In the frontend, React components interact only through interface adapters and use-cases, ensuring UI logic remains isolated from infrastructure. The backend mirrors this structure with entities, use-cases, interface adapters, and framework drivers for Express, PostgreSQL, and the ML pipeline. This consistent architecture enforces clear boundaries between domain logic, application logic, and external systems across the entire codebase.
 
 ### Backend
 
@@ -152,7 +160,7 @@ docker compose up
 - Backend API: http://localhost:5001
 - ML Python API: http://localhost:5002
 
-#### Option 2: Run with Docker (Recommended)
+#### Option 2: Run without Docker
 ```bash
 # Terminal 1 - Start Backend
 cd backend/ml_injury/training_pipeline
@@ -213,5 +221,22 @@ npm run test:setup
 ```bash
 npm test
 ```
+---
+## Breif User Guide
+
+Once Pitch Safe is running—either through Docker or a local setup provided by the above section, you can access the platform by visiting **http://localhost:5173**, which opens the Pitch Safe Dashboard directly in your browser. No installation is required, as everything operates through the web. As a coach, you can log in using your team’s assigned email and password, or, if you’d like to explore the demo Yankees team, you may use **aa@gmail.com** with the password **aaaaaa**. You can also create a new account and log in again to manage your own roster. After logging in, you’ll be taken to the Player Dashboard, where each pitcher is displayed along with an automatically generated injury risk score based on their recorded workload and performance history. If you want to review a player in more detail, simply click on their profile image to view personal information and add new game records. To export your team’s data, navigate to the Download tab, where you can download a fully formatted Excel report containing all player statistics and injury insights.
+
+---
+
+## Team Members
+
+<p align="center">
+  <img src="assets/team_bios.png" alt="Team Image" />
+</p>
+
+| Japleen K. | Derek Y. | Lihi G. | Abhinn K. | Pongpang K. |
+|:----------:|:--------:|:-------:|:---------:|:-----------:|
+| [Japleen K.](https://www.linkedin.com/in/japleen-kaur-uoft/) | [Derek Y.](https://www.linkedin.com/in/derek-yu-can/) | [Lihi G.](https://www.linkedin.com/in/lihi-galezer/) | [Abhinn K.](https://www.linkedin.com/in/abhinn-kaushik2028/) | [Pongpang K.](https://www.linkedin.com/in/napaorn-kao-ian/) |
+| Interest in ML & FinTech | Interest in Quantum Computing | Interest in SWE & UI | Interest in ML and Data algorithms | Interest in Computer Vision & Human Perception |
 
 ---
