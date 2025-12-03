@@ -60,15 +60,18 @@ describe('AddGameRecordUseCase', () => {
         release_pos_z: null
       });
 
-      expect(mockOutputBoundary.presentSuccess).toHaveBeenCalledWith({
-        message: 'Game record added successfully',
-        recordId: 1,
-        playerId: 100,
-        gameDate: '2024-01-15',
-        pitchType: 'Fastball',
-        releaseSpeed: 92.5,
-        spinRate: 2200
-      });
+      // Use expect.objectContaining to allow extra fields like injuryRiskData
+      expect(mockOutputBoundary.presentSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Game record added successfully',
+          recordId: 1,
+          playerId: 100,
+          gameDate: '2024-01-15',
+          pitchType: 'Fastball',
+          releaseSpeed: 92.5,
+          spinRate: 2200
+        })
+      );
 
       expect(mockOutputBoundary.presentError).not.toHaveBeenCalled();
     });
