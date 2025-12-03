@@ -216,11 +216,20 @@ cd backend
 npm run test:setup
 ```
 
-#### Step 5: Run Tests
+#### Step 5: Run Backend Tests
 
 ```bash
 npm test
 ```
+
+#### Step 5: Run Frontend Tests
+
+```bash
+cd frontend
+npm test
+```
+
+
 ---
 ## Breif User Guide
 
