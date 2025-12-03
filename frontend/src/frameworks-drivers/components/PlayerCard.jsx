@@ -7,7 +7,7 @@ const PlayerCard = ({
   playerMLBIds, 
   onPlayerClick, 
   getPlayerImage,
-  riskData  // ADD THIS
+  riskData
 }) => {
   const [imageAttempt, setImageAttempt] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
